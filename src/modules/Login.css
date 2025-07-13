@@ -98,7 +98,7 @@ body {
 
 .signup-link:hover {
   background-color: #007c82;
-  text-decoration: underline;
+  text-decoration:none;
   
 }
 

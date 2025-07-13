@@ -2,20 +2,29 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Login.css";
 import logo from "../images/EazyLoanLogo.png";
+import axios from '../API/axios'
 
 function Login() {
   const[email,setemail]=useState("");
   const[password,setPassword]=useState("");
   const navigate = useNavigate();
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
 
-    if (email === "vikas.septa@hexagon.com" && password === "Oneplus13@12345") {
-      navigate("/dashboard");
-    } else {
-      alert("Invalid email or password");
-    }
+ try {
+    const response = await axios.post('https://localhost:7202/login', {
+      email,
+      password,
+    });
+   
+    alert("Login successful!");
+    navigate("/Dashboard");
+    // You can redirect or reset form here
+  } catch (error) {
+    console.error('Login error:', error.response?.data || error.message);
+    alert("Login failed. " + (error.response?.data || ""));
+  }
   };
 
   return (

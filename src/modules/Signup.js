@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Signup.css";
 import logo from "../images/EazyLoanLogo.png";
+import axios from "../API/axios"
 
 function Signup() {
   const [name, setName] = useState("");
@@ -12,7 +13,7 @@ function Signup() {
 
   const navigate = useNavigate();
 
-  const handleSignup = (e) => {
+  const handleSignup = async (e) => {
     e.preventDefault();
 
     if (password !== confirmPassword) {
@@ -20,9 +21,22 @@ function Signup() {
       return;
     }
 
-    // For now, just show success and redirect
+     try {
+    const response = await axios.post('https://localhost:7202/register', {
+      name,
+      email,
+      password,
+    });
+
     alert("Signup successful!");
     navigate("/");
+    // You can redirect or reset form here
+  } catch (error) {
+    console.error('Signup error:', error.response?.data || error.message);
+    alert("Signup failed. " + (error.response?.data || ""));
+  }
+    
+   
   };
 
   return (
