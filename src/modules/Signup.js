@@ -32,7 +32,7 @@ function Signup() {
     navigate("/");
     // You can redirect or reset form here
   } catch (error) {
-         console.error('Signup error:', error.response?.data || error.message);
+              console.error('Signup error:', error.response?.data || error.message);
     alert("Signup failed. " + (error.response?.data || ""));
   }
     
@@ -120,3 +120,4 @@ function Signup() {
 }
 
 export default Signup;
+          }
