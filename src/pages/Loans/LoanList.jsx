@@ -2,10 +2,12 @@ import React, { useState } from 'react';
 import { FaEdit, FaTrash, FaRedo, FaEye } from 'react-icons/fa';
 import './LoanList.css';
 
+const DEFAULT_SORT_KEY = 'loanDate';
+
 const LoanList = ({ loans, onEdit, onDelete, onRenew, onView }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
-  const [sortBy, setSortBy] = useState('loanDate'); // eslint-disable-next-line no-unused-vars
+  const [sortBy, setSortBy] = useState(DEFAULT_SORT_KEY);
   const [sortOrder, setSortOrder] = useState('desc');
 
   const getStatus = (loan) => {
@@ -62,7 +64,7 @@ const LoanList = ({ loans, onEdit, onDelete, onRenew, onView }) => {
           aValue = parseFloat(a.loanAmount);
           bValue = parseFloat(b.loanAmount);
           break;
-        case 'loanDate':
+        case DEFAULT_SORT_KEY:
           aValue = new Date(a.loanDate);
           bValue = new Date(b.loanDate);
           break;
