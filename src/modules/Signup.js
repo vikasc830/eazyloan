@@ -22,7 +22,7 @@ function Signup() {
     }
 
      try {
-    const response = await axios.post('https://localhost:7202/register', {
+    await axios.post('https://localhost:7202/register', {
       name,
       email,
       password,

@@ -30,7 +30,21 @@ const LoanForm = ({ loan, onSubmit, onCancel }) => {
   }, [loan]);
 
   useEffect(() => {
-    calculateEstimatedValue();
+    const calculateValue = () => {
+      let total = 0;
+      
+      if (formData.ornamentType === 'gold' || formData.ornamentType === 'both') {
+        total += (parseFloat(formData.goldWeight) || 0) * goldRate;
+      }
+      
+      if (formData.ornamentType === 'silver' || formData.ornamentType === 'both') {
+        total += (parseFloat(formData.silverWeight) || 0) * silverRate;
+      }
+      
+      setEstimatedValue(total);
+    };
+    
+    calculateValue();
   }, [formData.goldWeight, formData.silverWeight, formData.ornamentType, goldRate, silverRate]);
 
   const calculateEstimatedValue = () => {

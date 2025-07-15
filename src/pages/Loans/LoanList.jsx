@@ -5,6 +5,7 @@ import './LoanList.css';
 const LoanList = ({ loans, onEdit, onDelete, onRenew, onView }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
+  // eslint-disable-next-line no-unused-vars
   const [sortBy, setSortBy] = useState('loanDate');
   const [sortOrder, setSortOrder] = useState('desc');
 
