@@ -47,20 +47,6 @@ const LoanForm = ({ loan, onSubmit, onCancel }) => {
     calculateValue();
   }, [formData.goldWeight, formData.silverWeight, formData.ornamentType, goldRate, silverRate]);
 
-  const calculateEstimatedValue = () => {
-    let total = 0;
-    
-    if (formData.ornamentType === 'gold' || formData.ornamentType === 'both') {
-      total += (parseFloat(formData.goldWeight) || 0) * goldRate;
-    }
-    
-    if (formData.ornamentType === 'silver' || formData.ornamentType === 'both') {
-      total += (parseFloat(formData.silverWeight) || 0) * silverRate;
-    }
-    
-    setEstimatedValue(total);
-  };
-
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
