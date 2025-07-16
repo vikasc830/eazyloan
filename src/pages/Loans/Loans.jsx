@@ -308,32 +308,28 @@ const Loans = () => {
         <table className="loans-table">
           <thead>
             <tr>
-              <th>Loan ID</th>
-              <th>Customer</th>
-              <th>Phone</th>
+              <th>ID</th>
+              <th>Customer Name</th>
+              <th>Guardian Name</th>
+              <th>Phone Number</th>
               <th>Ornament</th>
-              <th className="amount-header">Loan Amount</th>
-              <th className="amount-header">Total Paid</th>
-              <th className="amount-header">Balance</th>
-              <th>Loan Date</th>
-              <th>Due Date</th>
-              <th>Status</th>
+              <th className="amount-header">Total Principal</th>
+              <th className="amount-header">Total Interest</th>
+              <th className="amount-header">Total Amount</th>
+              <th>Date of Loan</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
             {currentLoans.length > 0 ? (
               currentLoans.map((loan) => {
-                const status = getStatusBadge(loan);
+                const interest = calculateInterest(loan);
+                const totalAmount = parseFloat(loan.loanAmount) + interest;
                 return (
                   <tr key={loan.id}>
                     <td className="loan-id">#{loan.id}</td>
-                    <td>
-                      <div className="customer-info">
-                        <strong>{loan.title} {loan.customerName}</strong>
-                        <small>S/o {loan.relationName}</small>
-                      </div>
-                    </td>
+                    <td className="customer-name">{loan.title} {loan.customerName}</td>
+                    <td className="guardian-name">{loan.relationName}</td>
                     <td>{loan.phoneNumber}</td>
                     <td>
                       <div className="ornament-info">
@@ -348,15 +344,9 @@ const Loans = () => {
                       </div>
                     </td>
                     <td className="amount">₹{parseFloat(loan.loanAmount).toLocaleString()}</td>
-                    <td className="amount">₹{calculateTotalPaid(loan).toLocaleString()}</td>
-                    <td className="amount">₹{calculateCurrentBalance(loan).toLocaleString()}</td>
+                    <td className="amount interest-amount">₹{interest.toLocaleString()}</td>
+                    <td className="amount total-amount">₹{totalAmount.toLocaleString()}</td>
                     <td>{new Date(loan.loanDate).toLocaleDateString()}</td>
-                    <td>{loan.dueDate ? new Date(loan.dueDate).toLocaleDateString() : '-'}</td>
-                    <td>
-                      <span className={`status-badge ${status.class}`}>
-                        {status.text}
-                      </span>
-                    </td>
                     <td>
                       <div className="action-buttons">
                         <button 
@@ -401,7 +391,7 @@ const Loans = () => {
               })
             ) : (
               <tr>
-                <td colSpan="11" className="no-data">
+                <td colSpan="10" className="no-data">
                   {searchTerm || filterStatus !== "all" 
                     ? "No loans match your search criteria" 
                     : "No loans found. Click 'Add New Loan' to get started."
