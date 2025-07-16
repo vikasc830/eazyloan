@@ -180,6 +180,36 @@ const LoanDetails = ({ loan, onClose }) => {
               </div>
             </div>
           )}
+
+          {/* Payment History */}
+          {loan.payments && loan.payments.length > 0 && (
+            <div className="details-section">
+              <h3>Payment History</h3>
+              <div className="payment-history">
+                {loan.payments.map((payment, index) => (
+                  <div key={payment.id || index} className="payment-record">
+                    <div className="payment-date">
+                      {new Date(payment.date).toLocaleDateString()}
+                    </div>
+                    <div className="payment-details">
+                      {payment.partialPayment > 0 && (
+                        <div className="payment-item received">
+                          <span className="payment-label">Payment Received:</span>
+                          <span className="payment-amount">₹{payment.partialPayment.toLocaleString()}</span>
+                        </div>
+                      )}
+                      {payment.extraLoan > 0 && (
+                        <div className="payment-item given">
+                          <span className="payment-label">Extra Loan Given:</span>
+                          <span className="payment-amount">₹{payment.extraLoan.toLocaleString()}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -1,7 +1,8 @@
 import React, { useState } from "react";
-import { FaPlus, FaEdit, FaTrash, FaRedo, FaEye, FaHistory } from "react-icons/fa";
+import { FaPlus, FaEdit, FaTrash, FaRedo, FaEye, FaHistory, FaMoneyBillWave } from "react-icons/fa";
 import LoanForm from "./LoanForm";
 import LoanDetails from "./LoanDetails";
+import PaymentModal from "./PaymentModal";
 import "./Loans.css";
 
 const Loans = () => {
@@ -77,8 +78,10 @@ const Loans = () => {
 
   const [showForm, setShowForm] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [editingLoan, setEditingLoan] = useState(null);
   const [selectedLoan, setSelectedLoan] = useState(null);
+  const [paymentLoan, setPaymentLoan] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [filterStatus, setFilterStatus] = useState("all");
@@ -163,6 +166,54 @@ const Loans = () => {
     setShowForm(true);
   };
 
+  const handlePaymentAction = (loan) => {
+    setPaymentLoan(loan);
+    setShowPaymentModal(true);
+  };
+
+  const handlePaymentSubmit = (loanId, paymentData) => {
+    setLoans(prevLoans => 
+      prevLoans.map(loan => {
+        if (loan.id === loanId) {
+          const updatedPayments = [...(loan.payments || []), {
+            id: Date.now().toString(),
+            date: paymentData.date,
+            partialPayment: paymentData.partialPayment || 0,
+            extraLoan: paymentData.extraLoan || 0,
+            timestamp: new Date().toISOString()
+          }];
+          
+          // Update loan amount if extra loan is given
+          const newLoanAmount = parseFloat(loan.loanAmount) + (paymentData.extraLoan || 0);
+          
+          return {
+            ...loan,
+            loanAmount: newLoanAmount.toString(),
+            payments: updatedPayments
+          };
+        }
+        return loan;
+      })
+    );
+    
+    setShowPaymentModal(false);
+    setPaymentLoan(null);
+  };
+
+  const calculateTotalPaid = (loan) => {
+    if (!loan.payments || loan.payments.length === 0) return 0;
+    return loan.payments.reduce((total, payment) => total + (payment.partialPayment || 0), 0);
+  };
+
+  const calculateCurrentBalance = (loan) => {
+    const today = new Date();
+    const loanDate = new Date(loan.loanDate);
+    const monthsDiff = Math.ceil((today - loanDate) / (1000 * 60 * 60 * 24 * 30));
+    const interest = (parseFloat(loan.loanAmount) * parseFloat(loan.interestRate) * monthsDiff) / 100;
+    const totalAmount = parseFloat(loan.loanAmount) + interest;
+    const totalPaid = calculateTotalPaid(loan);
+    return Math.max(0, totalAmount - totalPaid);
+  };
   const handleFormSubmit = (loanData) => {
     if (editingLoan && loans.find(l => l.id === editingLoan.id)) {
       // Update existing loan
@@ -261,7 +312,9 @@ const Loans = () => {
               <th>Customer</th>
               <th>Phone</th>
               <th>Ornament</th>
-              <th>Amount</th>
+              <th className="amount-header">Loan Amount</th>
+              <th className="amount-header">Total Paid</th>
+              <th className="amount-header">Balance</th>
               <th>Loan Date</th>
               <th>Due Date</th>
               <th>Status</th>
@@ -295,6 +348,8 @@ const Loans = () => {
                       </div>
                     </td>
                     <td className="amount">₹{parseFloat(loan.loanAmount).toLocaleString()}</td>
+                    <td className="amount">₹{calculateTotalPaid(loan).toLocaleString()}</td>
+                    <td className="amount">₹{calculateCurrentBalance(loan).toLocaleString()}</td>
                     <td>{new Date(loan.loanDate).toLocaleDateString()}</td>
                     <td>{loan.dueDate ? new Date(loan.dueDate).toLocaleDateString() : '-'}</td>
                     <td>
@@ -319,6 +374,13 @@ const Loans = () => {
                           <FaEdit />
                         </button>
                         <button 
+                          className="btn-action btn-payment" 
+                          onClick={() => handlePaymentAction(loan)}
+                          title="Add Payment/Extra Loan"
+                        >
+                          <FaMoneyBillWave />
+                        </button>
+                        <button 
                           className="btn-action btn-renew" 
                           onClick={() => handleRenewLoan(loan)}
                           title="Renew Loan"
@@ -339,7 +401,7 @@ const Loans = () => {
               })
             ) : (
               <tr>
-                <td colSpan="9" className="no-data">
+                <td colSpan="11" className="no-data">
                   {searchTerm || filterStatus !== "all" 
                     ? "No loans match your search criteria" 
                     : "No loans found. Click 'Add New Loan' to get started."
@@ -406,6 +468,17 @@ const Loans = () => {
             setShowDetails(false);
             setSelectedLoan(null);
           }}
+        />
+      )}
+
+      {showPaymentModal && paymentLoan && (
+        <PaymentModal
+          loan={paymentLoan}
+          onClose={() => {
+            setShowPaymentModal(false);
+            setPaymentLoan(null);
+          }}
+          onSubmit={handlePaymentSubmit}
         />
       )}
     </div>

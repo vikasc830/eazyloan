@@ -170,6 +170,10 @@
   white-space: nowrap;
 }
 
+.loans-table th.amount-header {
+  text-align: right;
+}
+
 .loans-table td {
   padding: 16px 12px;
   border-bottom: 1px solid #f1f5f9;
@@ -288,6 +292,16 @@
 
 .btn-edit:hover {
   background-color: #fde68a;
+  transform: scale(1.1);
+}
+
+.btn-payment {
+  background-color: #e0e7ff;
+  color: #3730a3;
+}
+
+.btn-payment:hover {
+  background-color: #c7d2fe;
   transform: scale(1.1);
 }
 
