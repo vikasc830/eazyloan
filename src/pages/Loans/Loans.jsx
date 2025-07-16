@@ -323,7 +323,7 @@ const Loans = () => {
           <tbody>
             {currentLoans.length > 0 ? (
               currentLoans.map((loan) => {
-                const interest = calculateInterest(loan);
+                const interest =500;
                 const totalAmount = parseFloat(loan.loanAmount) + interest;
                 return (
                   <tr key={loan.id}>
