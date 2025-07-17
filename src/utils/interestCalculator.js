@@ -11,7 +11,7 @@
 export const calculateLoanInterest = (loan) => {
   const loanDate = new Date(loan.loanDate);
   const today = new Date();
-  const interestRate = parseFloat(loan.interestRate) / 100; // Convert percentage to decimal
+  const monthlyInterestRate = parseFloat(loan.interestRate) / 100; // Convert percentage to decimal
   
   // Sort payments by date
   const sortedPayments = (loan.payments || []).sort((a, b) => new Date(a.date) - new Date(b.date));
@@ -22,49 +22,99 @@ export const calculateLoanInterest = (loan) => {
   
   const interestBreakdown = [];
   
-  // Process each payment chronologically
-  for (const payment of sortedPayments) {
-    const paymentDate = new Date(payment.date);
-    
-    // Calculate interest from last calculation date to payment date
-    const interestForPeriod = calculateInterestForPeriod(
-      currentPrincipal,
-      lastCalculationDate,
-      paymentDate,
-      interestRate
-    );
-    
-    totalInterest += interestForPeriod;
-    
-    if (interestForPeriod > 0) {
+  // Calculate first month interest (always full amount regardless of payments)
+  const firstMonthEnd = new Date(loanDate);
+  firstMonthEnd.setMonth(firstMonthEnd.getMonth() + 1);
+  
+  const firstMonthInterest = currentPrincipal * monthlyInterestRate;
+  totalInterest += firstMonthInterest;
+  
+  interestBreakdown.push({
+    fromDate: loanDate,
+    toDate: firstMonthEnd,
+    principal: currentPrincipal,
+    interest: firstMonthInterest,
+    type: 'first_month',
+    description: 'First month - Full interest on original amount'
+  });
+  
+  lastCalculationDate = firstMonthEnd;
+  
+  // Process payments that occurred in the first month
+  const firstMonthPayments = sortedPayments.filter(payment => 
+    new Date(payment.date) <= firstMonthEnd
+  );
+  
+  // Apply first month payments to reduce principal for future calculations
+  for (const payment of firstMonthPayments) {
+    if (payment.partialPayment > 0) {
+      // Partial payment reduces principal for future interest calculation
+      currentPrincipal = Math.max(0, currentPrincipal - payment.partialPayment);
+      
       interestBreakdown.push({
-        fromDate: lastCalculationDate,
-        toDate: paymentDate,
-        principal: currentPrincipal,
-        interest: interestForPeriod,
-        type: 'period'
+        date: new Date(payment.date),
+        partialPayment: payment.partialPayment,
+        newPrincipal: currentPrincipal,
+        type: 'payment',
+        description: `Payment reduces principal for future interest`
       });
     }
     
-    // Apply partial payment (reduces outstanding principal for future interest calculation)
-    if (payment.partialPayment > 0) {
-      // Partial payment first goes towards interest, then principal
-      const outstandingInterest = totalInterest;
+    // Add extra loan to principal
+    if (payment.extraLoan > 0) {
+      currentPrincipal += payment.extraLoan;
       
-      if (payment.partialPayment >= outstandingInterest) {
-        // Payment covers all interest and some principal
-        const principalPayment = payment.partialPayment - outstandingInterest;
-        currentPrincipal = Math.max(0, currentPrincipal - principalPayment);
-        totalInterest = 0; // Interest is fully paid
-      } else {
-        // Payment only covers part of the interest
-        totalInterest -= payment.partialPayment;
+      interestBreakdown.push({
+        date: new Date(payment.date),
+        extraLoan: payment.extraLoan,
+        newPrincipal: currentPrincipal,
+        type: 'extra_loan',
+        description: `Extra loan increases principal`
+      });
+    }
+  }
+  
+  // Process remaining payments (after first month)
+  const remainingPayments = sortedPayments.filter(payment => 
+    new Date(payment.date) > firstMonthEnd
+  );
+  
+  for (const payment of remainingPayments) {
+    const paymentDate = new Date(payment.date);
+    
+    // Calculate interest from last calculation date to payment date (day-wise after first month)
+    if (currentPrincipal > 0 && paymentDate > lastCalculationDate) {
+      const interestForPeriod = calculateInterestForPeriod(
+        currentPrincipal,
+        lastCalculationDate,
+        paymentDate,
+        monthlyInterestRate
+      );
+      
+      totalInterest += interestForPeriod;
+      
+      if (interestForPeriod > 0) {
+        interestBreakdown.push({
+          fromDate: lastCalculationDate,
+          toDate: paymentDate,
+          principal: currentPrincipal,
+          interest: interestForPeriod,
+          type: 'period',
+          description: 'Day-wise interest calculation'
+        });
       }
+    }
+    
+    // Apply partial payment (reduces principal for future interest calculation)
+    if (payment.partialPayment > 0) {
+      currentPrincipal = Math.max(0, currentPrincipal - payment.partialPayment);
       
       interestBreakdown.push({
         date: paymentDate,
         partialPayment: payment.partialPayment,
-        type: 'payment'
+        newPrincipal: currentPrincipal,
+        type: 'payment',
+        description: `Payment reduces principal for future interest`
       });
     }
     
@@ -76,43 +126,54 @@ export const calculateLoanInterest = (loan) => {
         date: paymentDate,
         extraLoan: payment.extraLoan,
         newPrincipal: currentPrincipal,
-        type: 'extra_loan'
+        type: 'extra_loan',
+        description: `Extra loan increases principal`
       });
     }
     
     lastCalculationDate = paymentDate;
   }
   
-  // Calculate interest from last payment/loan date to today
-  const finalInterest = calculateInterestForPeriod(
-    currentPrincipal,
-    lastCalculationDate,
-    today,
-    interestRate
-  );
-  
-  totalInterest += finalInterest;
-  
-  if (finalInterest > 0) {
-    interestBreakdown.push({
-      fromDate: lastCalculationDate,
-      toDate: today,
-      principal: currentPrincipal,
-      interest: finalInterest,
-      type: 'current'
-    });
+  // Calculate interest from last payment/calculation date to today (if after first month)
+  if (today > lastCalculationDate && currentPrincipal > 0) {
+    const finalInterest = calculateInterestForPeriod(
+      currentPrincipal,
+      lastCalculationDate,
+      today,
+      monthlyInterestRate
+    );
+    
+    totalInterest += finalInterest;
+    
+    if (finalInterest > 0) {
+      interestBreakdown.push({
+        fromDate: lastCalculationDate,
+        toDate: today,
+        principal: currentPrincipal,
+        interest: finalInterest,
+        type: 'current',
+        description: 'Current period interest'
+      });
+    }
   }
+  
+  // Calculate total amount (original loan + all extra loans + total interest)
+  const totalExtraLoans = calculateTotalExtraLoans(loan);
+  const originalLoanAmount = parseFloat(loan.loanAmount);
+  const totalPrincipal = originalLoanAmount + totalExtraLoans;
   
   return {
     totalInterest: Math.round(totalInterest * 100) / 100,
-    currentPrincipal,
+    currentPrincipal: totalPrincipal, // Original + extra loans
     interestBreakdown,
-    totalAmount: currentPrincipal + totalInterest
+    totalAmount: totalPrincipal + totalInterest,
+    originalLoanAmount,
+    totalExtraLoans
   };
 };
 
 /**
- * Calculate interest for a specific period
+ * Calculate interest for a specific period (after first month - day-wise)
  * @param {number} principal - Principal amount
  * @param {Date} fromDate - Start date
  * @param {Date} toDate - End date
@@ -125,18 +186,9 @@ const calculateInterestForPeriod = (principal, fromDate, toDate, monthlyRate) =>
   const timeDiff = toDate.getTime() - fromDate.getTime();
   const daysDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
   
-  // For the first month, use full monthly rate regardless of days
-  const monthsDiff = (toDate.getFullYear() - fromDate.getFullYear()) * 12 + 
-                    (toDate.getMonth() - fromDate.getMonth());
-  
-  if (monthsDiff === 0) {
-    // First month - use full monthly rate
-    return principal * monthlyRate;
-  } else {
-    // After first month - calculate day-wise
-    const dailyRate = monthlyRate / 30; // Assuming 30 days per month
-    return principal * dailyRate * daysDiff;
-  }
+  // Calculate day-wise interest (assuming 30 days per month)
+  const dailyRate = monthlyRate / 30;
+  return principal * dailyRate * daysDiff;
 };
 
 /**
@@ -160,7 +212,7 @@ export const calculateTotalExtraLoans = (loan) => {
 };
 
 /**
- * Get current outstanding balance
+ * Get current outstanding balance (Total Amount - Total Paid)
  * @param {Object} loan - The loan object
  * @returns {number} - Outstanding balance
  */
