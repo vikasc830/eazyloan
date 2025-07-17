@@ -3,6 +3,7 @@ import './LoanForm.css';
 
 const LoanForm = ({ loan, onSubmit, onCancel }) => {
   const [formData, setFormData] = useState({
+    loanid:'',
     customerName: '',
     relationName: '',
     relationType: 'father', // father, husband
@@ -13,14 +14,14 @@ const LoanForm = ({ loan, onSubmit, onCancel }) => {
     goldWeight: '',
     silverWeight: '',
     loanAmount: '',
-    interestRate: '2', // default 2% per month
+    interestRate: '3', // default 3% per month
     loanDate: new Date().toISOString().split('T')[0],
     dueDate: '',
     notes: ''
   });
 
-  const [goldRate, setGoldRate] = useState(6500); // Default gold rate per gram
-  const [silverRate, setSilverRate] = useState(85); // Default silver rate per gram
+  const [goldRate, setGoldRate] = useState(9800); // Default gold rate per gram
+  const [silverRate, setSilverRate] = useState(1080); // Default silver rate per gram
   const [estimatedValue, setEstimatedValue] = useState(0);
 
   useEffect(() => {
@@ -34,11 +35,11 @@ const LoanForm = ({ loan, onSubmit, onCancel }) => {
       let total = 0;
       
       if (formData.ornamentType === 'gold' || formData.ornamentType === 'both') {
-        total += (parseFloat(formData.goldWeight) || 0) * goldRate;
+        total += (parseFloat(formData.goldWeight) || 0) * goldRate*75/100;
       }
       
       if (formData.ornamentType === 'silver' || formData.ornamentType === 'both') {
-        total += (parseFloat(formData.silverWeight) || 0) * silverRate;
+        total += (parseFloat(formData.silverWeight) || 0) * silverRate*65/100;
       }
       
       setEstimatedValue(total);
@@ -80,6 +81,17 @@ const LoanForm = ({ loan, onSubmit, onCancel }) => {
         <form onSubmit={handleSubmit} className="loan-form">
           {/* Customer Information */}
           <div className="form-section">
+            <h3>Loan ID Information</h3>
+            <div className='form-row'>
+              <div className='form-group'>
+                 <label>Loan ID</label>
+                 <input type='text'
+                 name="loanid"
+                 value={formData.loanid}
+                 onChange={handleInputChange}
+                 required/>
+              </div>
+            </div>
             <h3>Customer Information</h3>
             
             <div className="form-row">
