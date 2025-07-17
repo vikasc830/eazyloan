@@ -51,29 +51,7 @@ const Loans = () => {
       payments: [],
       status: "Active",
     },
-    // Add more sample data to test pagination
-    ...Array.from({ length: 15 }, (_, i) => ({
-      id: `LN${String(i + 3).padStart(3, '0')}`,
-      customerName: `Customer ${i + 3}`,
-      title: i % 2 === 0 ? "Mr" : "Mrs",
-      relationName: `Guardian ${i + 3}`,
-      relationType: i % 2 === 0 ? "father" : "husband",
-      phoneNumber: `987654${String(i + 3).padStart(4, '0')}`,
-      address: `${i + 3} Street Name, Location`,
-      ornamentType: ["gold", "silver", "both"][i % 3],
-      goldWeight: i % 3 !== 1 ? String((i + 1) * 5) : "",
-      silverWeight: i % 3 !== 0 ? String((i + 1) * 10) : "",
-      loanAmount: String((i + 1) * 25000),
-      interestRate: "2",
-      loanDate: new Date(2024, i % 12, (i % 28) + 1).toISOString().split('T')[0],
-      dueDate: new Date(2024, (i % 12) + 6, (i % 28) + 1).toISOString().split('T')[0],
-      estimatedValue: (i + 1) * 30000,
-      goldRate: 6500,
-      silverRate: 85,
-      notes: `Notes for customer ${i + 3}`,
-      payments: [],
-      status: ["Active", "Due Soon", "Overdue"][i % 3],
-    }))
+   
   ]);
 
   const [showForm, setShowForm] = useState(false);
