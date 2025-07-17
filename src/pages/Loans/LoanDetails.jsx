@@ -212,11 +212,11 @@ const LoanDetails = ({ loan, onClose }) => {
               <div className="card-content">
                 <div className="financial-row">
                   <span className="financial-label">Original Principal</span>
-                  <span className="financial-value">₹{parseFloat(loan.loanAmount).toLocaleString()}</span>
+                  <span className="financial-value">₹{interestData.originalLoanAmount.toLocaleString()}</span>
                 </div>
                 <div className="financial-row">
-                  <span className="financial-label">Current Principal</span>
-                  <span className="financial-value">₹{interestData.currentPrincipal.toLocaleString()}</span>
+                  <span className="financial-label">Total Principal (Original + Extra)</span>
+                  <span className="financial-value">₹{(interestData.originalLoanAmount + interestData.totalExtraLoans).toLocaleString()}</span>
                 </div>
                 <div className="financial-row">
                   <span className="financial-label">Interest Accrued</span>
@@ -224,7 +224,7 @@ const LoanDetails = ({ loan, onClose }) => {
                 </div>
                 <div className="financial-row">
                   <span className="financial-label">Extra Loans Given</span>
-                  <span className="financial-value">₹{totalExtraLoans.toLocaleString()}</span>
+                  <span className="financial-value">₹{interestData.totalExtraLoans.toLocaleString()}</span>
                 </div>
                 <div className="financial-row">
                   <span className="financial-label">Total Payments Received</span>
@@ -307,6 +307,19 @@ const LoanDetails = ({ loan, onClose }) => {
                         <div className="period-item">
                           <div className="period-dates">
                             {new Date(item.fromDate).toLocaleDateString()} - {new Date(item.toDate).toLocaleDateString()}
+                            <span className="period-description"> ({item.description})</span>
+                          </div>
+                          <div className="period-details">
+                            Principal: ₹{item.principal.toLocaleString()} | 
+                            Interest: ₹{item.interest.toLocaleString()}
+                          </div>
+                        </div>
+                      )}
+                      {item.type === 'first_month' && (
+                        <div className="first-month-item">
+                          <div className="period-dates">
+                            {new Date(item.fromDate).toLocaleDateString()} - {new Date(item.toDate).toLocaleDateString()}
+                            <span className="period-description"> (First Month - Full Interest)</span>
                           </div>
                           <div className="period-details">
                             Principal: ₹{item.principal.toLocaleString()} | 
@@ -318,13 +331,16 @@ const LoanDetails = ({ loan, onClose }) => {
                         <div className="payment-item-breakdown">
                           <strong>Payment on {new Date(item.date).toLocaleDateString()}: 
                           ₹{item.partialPayment.toLocaleString()}</strong>
+                          <div>{item.description}</div>
+                          <div>New Principal for Future Interest: ₹{item.newPrincipal.toLocaleString()}</div>
                         </div>
                       )}
                       {item.type === 'extra_loan' && (
                         <div className="extra-loan-item">
                           <strong>Extra Loan on {new Date(item.date).toLocaleDateString()}: 
                           ₹{item.extraLoan.toLocaleString()}</strong>
-                          <div>New Principal: ₹{item.newPrincipal.toLocaleString()}</div>
+                          <div>{item.description}</div>
+                          <div>New Principal for Future Interest: ₹{item.newPrincipal.toLocaleString()}</div>
                         </div>
                       )}
                     </div>

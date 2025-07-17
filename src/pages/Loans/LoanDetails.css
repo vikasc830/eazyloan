@@ -472,10 +472,25 @@
   border-left-color: #0ea5e9;
 }
 
+.first-month-item {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border-left-color: #f59e0b;
+}
+
+.period-description {
+  font-size: 12px;
+  font-style: italic;
+  color: #64748b;
+}
+
 .period-dates {
   font-weight: 600;
   color: #0369a1;
   margin-bottom: 4px;
+}
+
+.first-month-item .period-dates {
+  color: #92400e;
 }
 
 .period-details {
@@ -483,10 +498,20 @@
   color: #0c4a6e;
 }
 
+.first-month-item .period-details {
+  color: #78350f;
+}
+
 .payment-item-breakdown {
   background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
   border-left-color: #22c55e;
   color: #166534;
+}
+
+.payment-item-breakdown div {
+  margin-top: 4px;
+  font-size: 13px;
+  font-style: italic;
 }
 
 .extra-loan-item {
