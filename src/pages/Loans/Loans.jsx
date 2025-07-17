@@ -3,6 +3,12 @@ import { FaPlus, FaEdit, FaTrash, FaRedo, FaEye, FaHistory, FaMoneyBillWave } fr
 import LoanForm from "./LoanForm";
 import LoanDetails from "./LoanDetails";
 import PaymentModal from "./PaymentModal";
+import { 
+  calculateLoanInterest, 
+  calculateTotalPaid, 
+  getCurrentBalance, 
+  getLoanStatus 
+} from "../../utils/interestCalculator";
 import "./Loans.css";
 
 const Loans = () => {
@@ -183,15 +189,6 @@ const Loans = () => {
     return loan.payments.reduce((total, payment) => total + (payment.partialPayment || 0), 0);
   };
 
-  const calculateCurrentBalance = (loan) => {
-    const today = new Date();
-    const loanDate = new Date(loan.loanDate);
-    const monthsDiff = Math.ceil((today - loanDate) / (1000 * 60 * 60 * 24 * 30));
-    const interest = (parseFloat(loan.loanAmount) * parseFloat(loan.interestRate) * monthsDiff) / 100;
-    const totalAmount = parseFloat(loan.loanAmount) + interest;
-    const totalPaid = calculateTotalPaid(loan);
-    return Math.max(0, totalAmount - totalPaid);
-  };
   const handleFormSubmit = (loanData) => {
     if (editingLoan && loans.find(l => l.id === editingLoan.id)) {
       // Update existing loan
@@ -211,16 +208,20 @@ const Loans = () => {
   };
 
   const getStatusBadge = (loan) => {
-    const today = new Date();
-    const dueDate = new Date(loan.dueDate);
+    const status = getLoanStatus(loan);
+    const statusClassMap = {
+      'Active': 'status-active',
+      'Due Soon': 'status-due-soon',
+      'Overdue': 'status-overdue',
+      'Closed': 'status-closed',
+      'Renewed': 'status-renewed',
+      'Paid': 'status-active'
+    };
     
-    if (loan.status === "Renewed") return { text: "Renewed", class: "status-renewed" };
-    if (loan.status === "Closed") return { text: "Closed", class: "status-closed" };
-    if (dueDate < today) return { text: "Overdue", class: "status-overdue" };
-    if (dueDate.getTime() - today.getTime() <= 7 * 24 * 60 * 60 * 1000) {
-      return { text: "Due Soon", class: "status-due-soon" };
-    }
-    return { text: "Active", class: "status-active" };
+    return { 
+      text: status, 
+      class: statusClassMap[status] || 'status-active' 
+    };
   };
 
   return (
@@ -301,8 +302,10 @@ const Loans = () => {
           <tbody>
             {currentLoans.length > 0 ? (
               currentLoans.map((loan) => {
-                const interest =500;
-                const totalAmount = parseFloat(loan.loanAmount) + interest;
+                const interestData = calculateLoanInterest(loan);
+                const totalPaid = calculateTotalPaid(loan);
+                const currentBalance = getCurrentBalance(loan);
+                
                 return (
                   <tr key={loan.id}>
                     <td className="loan-id">#{loan.id}</td>
@@ -321,9 +324,9 @@ const Loans = () => {
                         </small>
                       </div>
                     </td>
-                    <td className="amount">₹{parseFloat(loan.loanAmount).toLocaleString()}</td>
-                    <td className="amount interest-amount">₹{interest.toLocaleString()}</td>
-                    <td className="amount total-amount">₹{totalAmount.toLocaleString()}</td>
+                    <td className="amount">₹{interestData.currentPrincipal.toLocaleString()}</td>
+                    <td className="amount interest-amount">₹{interestData.totalInterest.toLocaleString()}</td>
+                    <td className="amount total-amount">₹{interestData.totalAmount.toLocaleString()}</td>
                     <td>{new Date(loan.loanDate).toLocaleDateString()}</td>
                     <td>
                       <div className="action-buttons">

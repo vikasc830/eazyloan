@@ -1,11 +1,16 @@
 import React, { useState } from "react";
 import { FaTimes } from "react-icons/fa";
+import { calculateLoanInterest, getCurrentBalance } from "../../utils/interestCalculator";
 import "./PaymentModal.css";
 
 const PaymentModal = ({ loan, onClose, onSubmit }) => {
   const [partialPayment, setPartialPayment] = useState("");
   const [extraLoan, setExtraLoan] = useState("");
   const [paymentDate, setPaymentDate] = useState(new Date().toISOString().split("T")[0]);
+
+  // Calculate current loan details
+  const interestData = calculateLoanInterest(loan);
+  const currentBalance = getCurrentBalance(loan);
 
   const handleSubmit = () => {
     if (!partialPayment && !extraLoan) {
@@ -34,7 +39,15 @@ const PaymentModal = ({ loan, onClose, onSubmit }) => {
           <div className="loan-summary">
             <div className="summary-item">
               <span className="label">Current Loan Amount:</span>
-              <span className="value">₹{parseFloat(loan.loanAmount).toLocaleString()}</span>
+              <span className="value">₹{interestData.currentPrincipal.toLocaleString()}</span>
+            </div>
+            <div className="summary-item">
+              <span className="label">Accrued Interest:</span>
+              <span className="value">₹{interestData.totalInterest.toLocaleString()}</span>
+            </div>
+            <div className="summary-item">
+              <span className="label">Current Balance:</span>
+              <span className="value">₹{currentBalance.toLocaleString()}</span>
             </div>
             <div className="summary-item">
               <span className="label">Interest Rate:</span>

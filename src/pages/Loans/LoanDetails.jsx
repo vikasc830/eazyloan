@@ -1,44 +1,26 @@
 import React from 'react';
 import { FaTimes, FaPrint, FaUser, FaPhone, FaMapMarkerAlt, FaGem, FaCalendarAlt, FaPercentage, FaRupeeSign, FaHistory } from 'react-icons/fa';
+import { 
+  calculateLoanInterest, 
+  calculateTotalPaid, 
+  calculateTotalExtraLoans, 
+  getCurrentBalance, 
+  getLoanStatus 
+} from "../../utils/interestCalculator";
 import './LoanDetails.css';
 
 const LoanDetails = ({ loan, onClose }) => {
   if (!loan) return null;
 
-  const calculateInterest = () => {
-    const today = new Date();
-    const loanDate = new Date(loan.loanDate);
-    const monthsDiff = Math.ceil((today - loanDate) / (1000 * 60 * 60 * 24 * 30));
-    return (parseFloat(loan.loanAmount) * parseFloat(loan.interestRate) * monthsDiff) / 100;
-  };
-
-  const getTotalAmount = () => {
-    return parseFloat(loan.loanAmount) + calculateInterest();
-  };
-
-  const getStatus = () => {
-    const today = new Date();
-    const dueDate = new Date(loan.dueDate);
-    
-    if (loan.status === 'closed') return 'Closed';
-    if (loan.status === 'renewed') return 'Renewed';
-    if (dueDate < today) return 'Overdue';
-    if (dueDate.getTime() - today.getTime() <= 7 * 24 * 60 * 60 * 1000) return 'Due Soon';
-    return 'Active';
-  };
+  // Calculate all interest and payment data
+  const interestData = calculateLoanInterest(loan);
+  const totalPaid = calculateTotalPaid(loan);
+  const totalExtraLoans = calculateTotalExtraLoans(loan);
+  const currentBalance = getCurrentBalance(loan);
+  const status = getLoanStatus(loan);
 
   const handlePrint = () => {
     window.print();
-  };
-
-  const calculateTotalPaid = () => {
-    if (!loan.payments || loan.payments.length === 0) return 0;
-    return loan.payments.reduce((total, payment) => total + (payment.partialPayment || 0), 0);
-  };
-
-  const calculateExtraLoansGiven = () => {
-    if (!loan.payments || loan.payments.length === 0) return 0;
-    return loan.payments.reduce((total, payment) => total + (payment.extraLoan || 0), 0);
   };
 
   return (
@@ -69,7 +51,7 @@ const LoanDetails = ({ loan, onClose }) => {
               </div>
               <div className="stat-content">
                 <div className="stat-value">₹{parseFloat(loan.loanAmount).toLocaleString()}</div>
-                <div className="stat-label">Principal Amount</div>
+                <div className="stat-label">Original Principal</div>
               </div>
             </div>
             
@@ -78,7 +60,7 @@ const LoanDetails = ({ loan, onClose }) => {
                 <FaPercentage />
               </div>
               <div className="stat-content">
-                <div className="stat-value">₹{calculateInterest().toLocaleString()}</div>
+                <div className="stat-value">₹{interestData.totalInterest.toLocaleString()}</div>
                 <div className="stat-label">Interest Accrued</div>
               </div>
             </div>
@@ -88,7 +70,7 @@ const LoanDetails = ({ loan, onClose }) => {
                 <FaRupeeSign />
               </div>
               <div className="stat-content">
-                <div className="stat-value">₹{getTotalAmount().toLocaleString()}</div>
+                <div className="stat-value">₹{interestData.totalAmount.toLocaleString()}</div>
                 <div className="stat-label">Total Amount</div>
               </div>
             </div>
@@ -98,7 +80,7 @@ const LoanDetails = ({ loan, onClose }) => {
                 <FaCalendarAlt />
               </div>
               <div className="stat-content">
-                <div className="stat-value">{getStatus()}</div>
+                <div className="stat-value">{status}</div>
                 <div className="stat-label">Status</div>
               </div>
             </div>
@@ -214,8 +196,8 @@ const LoanDetails = ({ loan, onClose }) => {
                 </div>
                 <div className="info-row">
                   <span className="info-label">Current Status</span>
-                  <span className={`status-badge status-${getStatus().toLowerCase().replace(' ', '-')}`}>
-                    {getStatus()}
+                  <span className={`status-badge status-${status.toLowerCase().replace(' ', '-')}`}>
+                    {status}
                   </span>
                 </div>
               </div>
@@ -233,20 +215,28 @@ const LoanDetails = ({ loan, onClose }) => {
                   <span className="financial-value">₹{parseFloat(loan.loanAmount).toLocaleString()}</span>
                 </div>
                 <div className="financial-row">
+                  <span className="financial-label">Current Principal</span>
+                  <span className="financial-value">₹{interestData.currentPrincipal.toLocaleString()}</span>
+                </div>
+                <div className="financial-row">
                   <span className="financial-label">Interest Accrued</span>
-                  <span className="financial-value interest">₹{calculateInterest().toLocaleString()}</span>
+                  <span className="financial-value interest">₹{interestData.totalInterest.toLocaleString()}</span>
                 </div>
                 <div className="financial-row">
                   <span className="financial-label">Extra Loans Given</span>
-                  <span className="financial-value">₹{calculateExtraLoansGiven().toLocaleString()}</span>
+                  <span className="financial-value">₹{totalExtraLoans.toLocaleString()}</span>
                 </div>
                 <div className="financial-row">
                   <span className="financial-label">Total Payments Received</span>
-                  <span className="financial-value received">₹{calculateTotalPaid().toLocaleString()}</span>
+                  <span className="financial-value received">₹{totalPaid.toLocaleString()}</span>
+                </div>
+                <div className="financial-row">
+                  <span className="financial-label">Current Balance</span>
+                  <span className="financial-value">₹{currentBalance.toLocaleString()}</span>
                 </div>
                 <div className="financial-row total">
-                  <span className="financial-label">Total Amount Due</span>
-                  <span className="financial-value">₹{getTotalAmount().toLocaleString()}</span>
+                  <span className="financial-label">Total Amount</span>
+                  <span className="financial-value">₹{interestData.totalAmount.toLocaleString()}</span>
                 </div>
               </div>
             </div>
@@ -295,6 +285,48 @@ const LoanDetails = ({ loan, onClose }) => {
                           </div>
                         )}
                       </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Interest Breakdown */}
+          {interestData.interestBreakdown && interestData.interestBreakdown.length > 0 && (
+            <div className="details-card full-width">
+              <div className="card-header">
+                <FaPercentage className="card-icon" />
+                <h3>Interest Calculation Breakdown</h3>
+              </div>
+              <div className="card-content">
+                <div className="interest-breakdown">
+                  {interestData.interestBreakdown.map((item, index) => (
+                    <div key={index} className="breakdown-item">
+                      {item.type === 'period' && (
+                        <div className="period-item">
+                          <div className="period-dates">
+                            {new Date(item.fromDate).toLocaleDateString()} - {new Date(item.toDate).toLocaleDateString()}
+                          </div>
+                          <div className="period-details">
+                            Principal: ₹{item.principal.toLocaleString()} | 
+                            Interest: ₹{item.interest.toLocaleString()}
+                          </div>
+                        </div>
+                      )}
+                      {item.type === 'payment' && (
+                        <div className="payment-item-breakdown">
+                          <strong>Payment on {new Date(item.date).toLocaleDateString()}: 
+                          ₹{item.partialPayment.toLocaleString()}</strong>
+                        </div>
+                      )}
+                      {item.type === 'extra_loan' && (
+                        <div className="extra-loan-item">
+                          <strong>Extra Loan on {new Date(item.date).toLocaleDateString()}: 
+                          ₹{item.extraLoan.toLocaleString()}</strong>
+                          <div>New Principal: ₹{item.newPrincipal.toLocaleString()}</div>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
