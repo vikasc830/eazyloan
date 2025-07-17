@@ -303,44 +303,40 @@ const LoanDetails = ({ loan, onClose }) => {
                 <div className="interest-breakdown">
                   {interestData.interestBreakdown.map((item, index) => (
                     <div key={index} className="breakdown-item">
-                      {item.type === 'period' && (
+                      {(item.type === 'period' || item.type === 'current') && (
                         <div className="period-item">
                           <div className="period-dates">
                             {new Date(item.fromDate).toLocaleDateString()} - {new Date(item.toDate).toLocaleDateString()}
-                            <span className="period-description"> ({item.description})</span>
+                            <span className="period-description"> ({item.months.toFixed(2)} months)</span>
                           </div>
                           <div className="period-details">
-                            Principal: ₹{item.principal.toLocaleString()} | 
+                            Principal: ₹{item.principal.toLocaleString()} × {loan.interestRate}% × {item.months.toFixed(2)} months = 
                             Interest: ₹{item.interest.toLocaleString()}
                           </div>
                         </div>
                       )}
-                      {item.type === 'first_month' && (
-                        <div className="first-month-item">
-                          <div className="period-dates">
-                            {new Date(item.fromDate).toLocaleDateString()} - {new Date(item.toDate).toLocaleDateString()}
-                            <span className="period-description"> (First Month - Full Interest)</span>
-                          </div>
-                          <div className="period-details">
-                            Principal: ₹{item.principal.toLocaleString()} | 
-                            Interest: ₹{item.interest.toLocaleString()}
-                          </div>
-                        </div>
-                      )}
-                      {item.type === 'payment' && (
-                        <div className="payment-item-breakdown">
-                          <strong>Payment on {new Date(item.date).toLocaleDateString()}: 
-                          ₹{item.partialPayment.toLocaleString()}</strong>
+                      {item.type === 'loan' && (
+                        <div className="loan-item">
+                          <strong>Loan Given on {new Date(item.date).toLocaleDateString()}: 
+                          ₹{item.amount.toLocaleString()}</strong>
                           <div>{item.description}</div>
-                          <div>New Principal for Future Interest: ₹{item.newPrincipal.toLocaleString()}</div>
+                          <div>Principal Amount: ₹{item.newPrincipal.toLocaleString()}</div>
                         </div>
                       )}
                       {item.type === 'extra_loan' && (
                         <div className="extra-loan-item">
                           <strong>Extra Loan on {new Date(item.date).toLocaleDateString()}: 
-                          ₹{item.extraLoan.toLocaleString()}</strong>
+                          ₹{item.amount.toLocaleString()}</strong>
                           <div>{item.description}</div>
-                          <div>New Principal for Future Interest: ₹{item.newPrincipal.toLocaleString()}</div>
+                          <div>New Principal for Interest: ₹{item.newPrincipal.toLocaleString()}</div>
+                        </div>
+                      )}
+                      {item.type === 'payment' && (
+                        <div className="payment-item-breakdown">
+                          <strong>Payment on {new Date(item.date).toLocaleDateString()}: 
+                          ₹{Math.abs(item.amount).toLocaleString()}</strong>
+                          <div>{item.description}</div>
+                          <div>Remaining Principal: ₹{item.newPrincipal.toLocaleString()}</div>
                         </div>
                       )}
                     </div>
