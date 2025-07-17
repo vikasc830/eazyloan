@@ -414,6 +414,19 @@
   .action-buttons {
     flex-wrap: wrap;
   }
+  
+  .loans-summary {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .loans-table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .loans-table {
+    min-width: 1000px;
+  }
 }
 
 @media (max-width: 768px) {
@@ -425,10 +438,11 @@
   
   .btn-add-loan {
     justify-content: center;
+    width: 100%;
   }
   
   .loans-summary {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: 1fr 1fr;
     gap: 16px;
   }
   
@@ -442,26 +456,31 @@
   
   .loans-table-container {
     overflow-x: auto;
+    margin: 0 -20px;
+    padding: 0 20px;
   }
   
   .loans-table {
-    min-width: 800px;
+    min-width: 1200px;
     font-size: 12px;
   }
   
   .loans-table th,
   .loans-table td {
     padding: 12px 8px;
+    white-space: nowrap;
   }
   
   .action-buttons {
-    flex-direction: column;
-    gap: 4px;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: flex-start;
   }
   
   .btn-action {
-    width: 28px;
-    height: 28px;
+    width: 30px;
+    height: 30px;
+    font-size: 10px;
   }
   
   .pagination {
@@ -474,23 +493,113 @@
     font-size: 12px;
     min-width: 36px;
   }
+  
+  .loans-controls {
+    padding: 16px;
+    margin: 0 -20px 20px -20px;
+  }
+  
+  .search-input {
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
 }
 
 @media (max-width: 480px) {
+  .loans-page {
+    padding: 0 10px;
+  }
+  
   .loans-summary {
     grid-template-columns: 1fr;
+    gap: 12px;
   }
   
   .loans-title h1 {
     font-size: 24px;
   }
   
+  .loans-title p {
+    font-size: 14px;
+  }
+  
   .loans-controls {
-    padding: 16px;
+    padding: 12px;
+    margin: 0 -10px 16px -10px;
   }
   
   .filter-section {
     flex-direction: column;
     gap: 8px;
+  }
+  
+  .filter-select {
+    width: 100%;
+  }
+  
+  .summary-card {
+    padding: 16px 12px;
+  }
+  
+  .summary-value {
+    font-size: 20px;
+  }
+  
+  .summary-label {
+    font-size: 12px;
+  }
+  
+  .loans-table-container {
+    margin: 0 -10px;
+    padding: 0 10px;
+  }
+  
+  .loans-table {
+    font-size: 11px;
+  }
+  
+  .loans-table th,
+  .loans-table td {
+    padding: 8px 4px;
+  }
+  
+  .customer-info strong,
+  .customer-info small {
+    display: block;
+    font-size: 11px;
+  }
+  
+  .ornament-info {
+    font-size: 11px;
+  }
+  
+  .ornament-info small {
+    font-size: 10px;
+  }
+  
+  .amount {
+    font-size: 12px;
+  }
+  
+  .action-buttons {
+    flex-direction: column;
+    gap: 4px;
+    align-items: center;
+  }
+  
+  .btn-action {
+    width: 28px;
+    height: 28px;
+    font-size: 9px;
+  }
+  
+  .pagination-btn {
+    padding: 4px 8px;
+    font-size: 11px;
+    min-width: 32px;
+  }
+  
+  .results-info {
+    font-size: 12px;
+    margin-top: 12px;
   }
 }

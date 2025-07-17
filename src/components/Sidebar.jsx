@@ -1,42 +1,67 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { NavLink } from "react-router-dom";
 import {
   FaTachometerAlt,
   FaMoneyCheckAlt,
   FaChartBar,
   FaSignOutAlt,
+  FaTimes,
 } from "react-icons/fa";
 import "./Sidebar.css";
 import logo from "../images/EazyLoanLogo.png";
 
-const Sidebar = () => {
+const Sidebar = ({ isOpen, onClose }) => {
   const getLinkClass = ({ isActive }) =>
     `sidebar-link${isActive ? " active" : ""}`;
 
+  // Close mobile menu when clicking outside or on link
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth > 768 && isOpen) {
+        onClose();
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [isOpen, onClose]);
+
+  const handleLinkClick = () => {
+    if (window.innerWidth <= 768) {
+      onClose();
+    }
+  };
+
   return (
-    <aside className="sidebar">
+    <>
+      {isOpen && <div className="sidebar-overlay active" onClick={onClose}></div>}
+      <aside className={`sidebar ${isOpen ? 'mobile-open' : ''}`}>
+        <button className="mobile-close-btn" onClick={onClose}>
+          <FaTimes />
+        </button>
       <div className="sidebar-header">
         <img src={logo} alt="CrediFlow Logo" className="sidebar-logo" />
       </div>
       <nav className="sidebar-nav">
-       <NavLink to="/dashboard" end className={getLinkClass}>
-  <FaTachometerAlt className="sidebar-icon" />
-  <span>Dashboard</span>
-</NavLink>
-<NavLink to="/dashboard/loans" className={getLinkClass}>
-  <FaMoneyCheckAlt className="sidebar-icon" />
-  <span>Loans</span>
-</NavLink>
-<NavLink to="/dashboard/reports" className={getLinkClass}>
-  <FaChartBar className="sidebar-icon" />
-  <span>Reports</span>
-</NavLink>
-        <NavLink to="/" className="sidebar-link">
+          <NavLink to="/dashboard" end className={getLinkClass} onClick={handleLinkClick}>
+            <FaTachometerAlt className="sidebar-icon" />
+            <span>Dashboard</span>
+          </NavLink>
+          <NavLink to="/dashboard/loans" className={getLinkClass} onClick={handleLinkClick}>
+            <FaMoneyCheckAlt className="sidebar-icon" />
+            <span>Loans</span>
+          </NavLink>
+          <NavLink to="/dashboard/reports" className={getLinkClass} onClick={handleLinkClick}>
+            <FaChartBar className="sidebar-icon" />
+            <span>Reports</span>
+          </NavLink>
+          <NavLink to="/" className="sidebar-link" onClick={handleLinkClick}>
           <FaSignOutAlt className="sidebar-icon" />
           <span>Logout</span>
         </NavLink>
       </nav>
-    </aside>
+      </aside>
+    </>
   );
 };
 

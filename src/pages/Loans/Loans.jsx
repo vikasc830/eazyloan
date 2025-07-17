@@ -308,7 +308,7 @@ const Loans = () => {
                 
                 return (
                   <tr key={loan.id}>
-                    <td className="loan-id">#{loan.id}</td>
+                    <td className="loan-id">#{loan.loanid || loan.id}</td>
                     <td className="customer-name">{loan.title} {loan.customerName}</td>
                     <td className="guardian-name">{loan.relationName}</td>
                     <td>{loan.phoneNumber}</td>

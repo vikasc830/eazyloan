@@ -28,3 +28,32 @@
   padding: 24px;
   background-color: #f8fafc;
 }
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .dashboard-right {
+    margin-left: 200px;
+    width: calc(100vw - 200px);
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-layout {
+    flex-direction: column;
+  }
+  
+  .dashboard-right {
+    margin-left: 0;
+    width: 100vw;
+  }
+  
+  .dashboard-content {
+    padding: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-content {
+    padding: 12px;
+  }
+}

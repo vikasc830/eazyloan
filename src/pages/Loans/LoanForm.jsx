@@ -30,6 +30,19 @@ const LoanForm = ({ loan, onSubmit, onCancel }) => {
     }
   }, [loan]);
 
+  // Auto-calculate due date when loan date changes
+  useEffect(() => {
+    if (formData.loanDate) {
+      const loanDate = new Date(formData.loanDate);
+      const dueDate = new Date(loanDate);
+      dueDate.setMonth(dueDate.getMonth() + 11);
+      
+      setFormData(prev => ({
+        ...prev,
+        dueDate: dueDate.toISOString().split('T')[0]
+      }));
+    }
+  }, [formData.loanDate]);
   useEffect(() => {
     const calculateValue = () => {
       let total = 0;
