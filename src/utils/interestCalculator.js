@@ -58,10 +58,29 @@ export const calculateLoanInterest = (loan) => {
   principalTimeline.sort((a, b) => a.date - b.date);
   
   // Calculate interest for each period
-  let currentPrincipal = 0;
+  let currentPrincipal = parseFloat(loan.loanAmount);
   let lastDate = loanDate;
   
-  for (let i = 0; i < principalTimeline.length; i++) {
+  // If there are no payments, calculate interest from loan date to today
+  if (principalTimeline.length === 1) {
+    // Only the initial loan entry exists
+    const monthsDiff = calculateMonthsDifference(loanDate, today);
+    if (monthsDiff > 0) {
+      totalInterest = currentPrincipal * monthlyInterestRate * monthsDiff;
+      
+      interestBreakdown.push({
+        fromDate: loanDate,
+        toDate: today,
+        principal: currentPrincipal,
+        months: monthsDiff,
+        interest: totalInterest,
+        type: 'current',
+        description: `Interest for ${monthsDiff.toFixed(2)} months on ₹${currentPrincipal.toLocaleString()}`
+      });
+    }
+  } else {
+    // Process timeline with payments
+    for (let i = 1; i < principalTimeline.length; i++) {
     const event = principalTimeline[i];
     const eventDate = event.date;
     
@@ -102,25 +121,26 @@ export const calculateLoanInterest = (loan) => {
     });
     
     lastDate = eventDate;
-  }
-  
-  // Calculate interest from last event to today (if there's outstanding principal)
-  if (currentPrincipal > 0 && today > lastDate) {
-    const monthsDiff = calculateMonthsDifference(lastDate, today);
-    const finalInterest = currentPrincipal * monthlyInterestRate * monthsDiff;
+    }
     
-    if (finalInterest > 0) {
-      totalInterest += finalInterest;
+    // Calculate interest from last event to today (if there's outstanding principal)
+    if (currentPrincipal > 0 && today > lastDate) {
+      const monthsDiff = calculateMonthsDifference(lastDate, today);
+      const finalInterest = currentPrincipal * monthlyInterestRate * monthsDiff;
       
-      interestBreakdown.push({
-        fromDate: lastDate,
-        toDate: today,
-        principal: currentPrincipal,
-        months: monthsDiff,
-        interest: finalInterest,
-        type: 'current',
-        description: `Current interest for ${monthsDiff.toFixed(2)} months on ₹${currentPrincipal.toLocaleString()}`
-      });
+      if (finalInterest > 0) {
+        totalInterest += finalInterest;
+        
+        interestBreakdown.push({
+          fromDate: lastDate,
+          toDate: today,
+          principal: currentPrincipal,
+          months: monthsDiff,
+          interest: finalInterest,
+          type: 'current',
+          description: `Current interest for ${monthsDiff.toFixed(2)} months on ₹${currentPrincipal.toLocaleString()}`
+        });
+      }
     }
   }
   
