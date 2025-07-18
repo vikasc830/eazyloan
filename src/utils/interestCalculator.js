@@ -149,19 +149,38 @@ export const calculateLoanInterest = (loan) => {
  * @returns {number} - Difference in months (decimal)
  */
 const calculateMonthsDifference = (startDate, endDate) => {
-  // Simple calculation: difference in milliseconds converted to months
-  const timeDiff = endDate.getTime() - startDate.getTime();
-  const daysDiff = timeDiff / (1000 * 60 * 60 * 24);
-  const monthsDiff = daysDiff / 30.44; // Average days per month
+  // Calculate months difference more accurately
+  const yearDiff = endDate.getFullYear() - startDate.getFullYear();
+  const monthDiff = endDate.getMonth() - startDate.getMonth();
+  const dayDiff = endDate.getDate() - startDate.getDate();
+  
+  // Total months difference
+  let totalMonths = yearDiff * 12 + monthDiff;
+  
+  // Add fractional month based on days
+  if (dayDiff > 0) {
+    const daysInMonth = new Date(endDate.getFullYear(), endDate.getMonth() + 1, 0).getDate();
+    totalMonths += dayDiff / daysInMonth;
+  } else if (dayDiff < 0) {
+    totalMonths -= 1;
+    const daysInPrevMonth = new Date(endDate.getFullYear(), endDate.getMonth(), 0).getDate();
+    totalMonths += (daysInPrevMonth + dayDiff) / daysInPrevMonth;
+  }
+  
+  // For very new loans (less than a day), consider minimum of 1 day
+  if (totalMonths < 0.001) {
+    const timeDiff = endDate.getTime() - startDate.getTime();
+    const daysDiff = timeDiff / (1000 * 60 * 60 * 24);
+    totalMonths = Math.max(daysDiff / 30, 0.001); // Minimum calculation
+  }
   
   console.log('Date calculation:', {
     startDate: startDate.toISOString(),
     endDate: endDate.toISOString(),
-    daysDiff,
-    monthsDiff
+    totalMonths: totalMonths.toFixed(4)
   });
   
-  return Math.max(0, monthsDiff);
+  return Math.max(0, totalMonths);
 };
 
 /**
