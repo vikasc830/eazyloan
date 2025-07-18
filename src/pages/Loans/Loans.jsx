@@ -184,11 +184,6 @@ const Loans = () => {
     setPaymentLoan(null);
   };
 
-  const calculateTotalPaid = (loan) => {
-    if (!loan.payments || loan.payments.length === 0) return 0;
-    return loan.payments.reduce((total, payment) => total + (payment.partialPayment || 0), 0);
-  };
-
   const handleFormSubmit = (loanData) => {
     if (editingLoan && loans.find(l => l.id === editingLoan.id)) {
       // Update existing loan
