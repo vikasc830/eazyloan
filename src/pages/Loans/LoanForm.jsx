@@ -69,19 +69,38 @@ const LoanForm = ({ loan, onSubmit, onCancel }) => {
     }));
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    
-    const loanData = {
-      ...formData,
-      estimatedValue,
-      goldRate,
-      silverRate,
-      id: loan?.id || Date.now().toString()
-    };
-    
-    onSubmit(loanData);
+ const handleSubmit = async (e) => {
+  e.preventDefault();
+
+  const loanData = {
+    ...formData,
+    estimatedValue,
+    goldRate,
+    silverRate,
+    id: loan?.id || Date.now().toString()
   };
+
+  try {
+    const response = await fetch("https://localhost:7202/api/Loan", {
+      method: loan?.id ? "PUT" : "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(loanData),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    const savedLoan = await response.json();
+    onSubmit(savedLoan); // Pass the data back to Loans.jsx
+  } catch (error) {
+    console.error("Failed to save loan:", error);
+    alert("Failed to save loan. Check console for details.");
+  }
+};
+
 
   return (
     <div className="loan-form-overlay">
