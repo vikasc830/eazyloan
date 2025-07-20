@@ -137,6 +137,40 @@
   font-size: 16px;
 }
 
+/* Error Styles */
+.form-group input.error,
+.form-group select.error,
+.form-group textarea.error {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.error-message {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  color: #ef4444;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.error-message svg {
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.btn-submit:disabled {
+  background-color: #9ca3af;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.btn-submit:disabled:hover {
+  background-color: #9ca3af;
+  transform: none;
+}
+
 .form-actions {
   display: flex;
   justify-content: flex-end;
@@ -231,6 +265,10 @@
     width: 100%;
     padding: 14px 24px;
   }
+  
+  .error-message {
+    font-size: 12px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -279,6 +317,10 @@
   .form-group textarea {
     padding: 10px 12px;
     font-size: 16px;
+  }
+  
+  .error-message {
+    font-size: 11px;
   }
   
   .estimated-value {
