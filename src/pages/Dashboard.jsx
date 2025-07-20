@@ -22,7 +22,7 @@ import {
   FaUsers, 
   FaChartLine, 
   FaExclamationTriangle, 
-  FaTrendingUp,
+  FaArrowTrendUp,
   FaCalendarAlt,
   FaGem,
   FaMoneyBillWave,
@@ -48,13 +48,27 @@ const Dashboard = () => {
   // Fetch loans data
   const fetchLoans = async () => {
     try {
-      const response = await fetch("https://localhost:7202/api/Loan");
+      const response = await fetch("https://localhost:7202/api/Loan", {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
       if (!response.ok) throw new Error("Failed to fetch loans");
       const data = await response.json();
       setLoans(data);
       processChartData(data);
     } catch (err) {
       console.error(err);
+      // Set empty array to prevent rendering errors
+      setLoans([]);
+      setChartData({
+        monthlyData: [],
+        statusData: [],
+        ornamentData: [],
+        interestTrendData: [],
+        performanceData: []
+      });
     } finally {
       setLoading(false);
     }
@@ -271,7 +285,7 @@ const Dashboard = () => {
     { 
       title: "Interest Earned", 
       value: `₹${(totalInterest / 100000).toFixed(1)}L`, 
-      icon: FaTrendingUp, 
+      icon: FaArrowTrendUp, 
       color: "#f59e0b",
       trend: 12.3,
       subtitle: "Total interest"
