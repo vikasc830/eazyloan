@@ -22,7 +22,6 @@ import {
   FaUsers, 
   FaChartLine, 
   FaExclamationTriangle, 
-  FaArrowTrendUp,
   FaCalendarAlt,
   FaGem,
   FaMoneyBillWave,
@@ -285,7 +284,7 @@ const Dashboard = () => {
     { 
       title: "Interest Earned", 
       value: `₹${(totalInterest / 100000).toFixed(1)}L`, 
-      icon: FaArrowTrendUp, 
+      icon: FaArrowUp, 
       color: "#f59e0b",
       trend: 12.3,
       subtitle: "Total interest"
