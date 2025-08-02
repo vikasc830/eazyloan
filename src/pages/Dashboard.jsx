@@ -321,7 +321,7 @@ const Dashboard = () => {
     { 
       title: "Active Loans", 
       value: activeLoans, 
-      icon: FaTrendingUp,
+      icon: FaArrowUp,
       color: COLORS.success,
       trend: 5.2,
       subtitle: "Currently running"
