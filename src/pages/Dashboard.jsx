@@ -15,7 +15,9 @@ import {
   Cell,
   AreaChart,
   Area,
-  ComposedChart
+  ComposedChart,
+  RadialBarChart,
+  RadialBar
 } from 'recharts';
 import { 
   FaRupeeSign, 
@@ -27,10 +29,69 @@ import {
   FaMoneyBillWave,
   FaArrowUp,
   FaArrowDown,
-  FaEquals
+  FaEquals,
+  FaTrendingUp,
+  FaCoins
 } from 'react-icons/fa';
 import { calculateLoanInterest, getCurrentBalance, getLoanStatus } from "../utils/interestCalculator";
 import "./Dashboard.css";
+
+// Modern color palette
+const COLORS = {
+  primary: '#6366f1',
+  secondary: '#8b5cf6',
+  accent: '#06b6d4',
+  success: '#10b981',
+  warning: '#f59e0b',
+  danger: '#ef4444',
+  info: '#3b82f6',
+  gradient: {
+    primary: ['#6366f1', '#8b5cf6'],
+    secondary: ['#06b6d4', '#0891b2'],
+    success: ['#10b981', '#059669'],
+    warning: ['#f59e0b', '#d97706'],
+    danger: ['#ef4444', '#dc2626']
+  }
+};
+
+// Custom tooltip component
+const CustomTooltip = ({ active, payload, label }) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="custom-tooltip">
+        <p className="tooltip-label">{`${label}`}</p>
+        {payload.map((entry, index) => (
+          <p key={index} className="tooltip-item" style={{ color: entry.color }}>
+            <span className="tooltip-name">{entry.name}:</span>
+            <span className="tooltip-value">
+              {typeof entry.value === 'number' && entry.name.includes('Amount') 
+                ? `₹${entry.value.toLocaleString()}` 
+                : entry.value}
+            </span>
+          </p>
+        ))}
+      </div>
+    );
+  }
+  return null;
+};
+
+// Custom legend component
+const CustomLegend = ({ payload }) => {
+  return (
+    <div className="custom-legend">
+      {payload.map((entry, index) => (
+        <div key={index} className="legend-item">
+          <div 
+            className="legend-color" 
+            style={{ backgroundColor: entry.color }}
+          ></div>
+          <span className="legend-text">{entry.value}</span>
+        </div>
+      ))}
+    </div>
+  );
+};
 
 const Dashboard = () => {
   const [loans, setLoans] = useState([]);
@@ -206,21 +267,21 @@ const Dashboard = () => {
   // Helper functions for colors
   const getStatusColor = (status) => {
     const colors = {
-      'Active': '#10b981',
-      'Due Soon': '#f59e0b',
-      'Overdue': '#ef4444',
+      'Active': COLORS.success,
+      'Due Soon': COLORS.warning,
+      'Overdue': COLORS.danger,
       'Closed': '#6b7280',
-      'Renewed': '#3b82f6',
-      'Paid': '#10b981'
+      'Renewed': COLORS.info,
+      'Paid': COLORS.success
     };
     return colors[status] || '#6b7280';
   };
 
   const getOrnamentColor = (type) => {
     const colors = {
-      'Gold': '#fbbf24',
+      'Gold': COLORS.warning,
       'Silver': '#9ca3af',
-      'Gold & Silver': '#f59e0b'
+      'Gold & Silver': COLORS.accent
     };
     return colors[type] || '#6b7280';
   };
@@ -252,16 +313,16 @@ const Dashboard = () => {
     { 
       title: "Total Loans", 
       value: totalLoans, 
-      icon: FaUsers, 
-      color: "#00adb5",
+      icon: FaUsers,
+      color: COLORS.primary,
       trend: loanGrowth,
       subtitle: "Active portfolio"
     },
     { 
       title: "Active Loans", 
       value: activeLoans, 
-      icon: FaChartLine, 
-      color: "#10b981",
+      icon: FaTrendingUp,
+      color: COLORS.success,
       trend: 5.2,
       subtitle: "Currently running"
     },
@@ -269,15 +330,15 @@ const Dashboard = () => {
       title: "Overdue Loans", 
       value: overdueLoans, 
       icon: FaExclamationTriangle, 
-      color: "#ef4444",
+      color: COLORS.danger,
       trend: -2.1,
       subtitle: "Needs attention"
     },
     { 
       title: "Total Principal", 
       value: `₹${(totalPrincipal / 100000).toFixed(1)}L`, 
-      icon: FaRupeeSign, 
-      color: "#3b82f6",
+      icon: FaCoins,
+      color: COLORS.info,
       trend: 8.7,
       subtitle: "Principal amount"
     },
@@ -285,7 +346,7 @@ const Dashboard = () => {
       title: "Interest Earned", 
       value: `₹${(totalInterest / 100000).toFixed(1)}L`, 
       icon: FaArrowUp, 
-      color: "#f59e0b",
+      color: COLORS.warning,
       trend: 12.3,
       subtitle: "Total interest"
     },
@@ -293,7 +354,7 @@ const Dashboard = () => {
       title: "Outstanding", 
       value: `₹${(totalOutstanding / 100000).toFixed(1)}L`, 
       icon: FaMoneyBillWave, 
-      color: "#8b5cf6",
+      color: COLORS.secondary,
       trend: -3.4,
       subtitle: "To be collected"
     },
@@ -366,62 +427,78 @@ const Dashboard = () => {
               <h3>Monthly Performance Overview</h3>
               <p>Principal amounts, interest earned, and loan counts by month</p>
             </div>
-            <div className="chart-legend">
-              <span className="legend-item">
-                <div className="legend-color" style={{ backgroundColor: '#00adb5' }}></div>
-                Principal
-              </span>
-              <span className="legend-item">
-                <div className="legend-color" style={{ backgroundColor: '#f59e0b' }}></div>
-                Interest
-              </span>
-              <span className="legend-item">
-                <div className="legend-color" style={{ backgroundColor: '#10b981' }}></div>
-                Count
-              </span>
-            </div>
           </div>
           <div className="chart-content">
-            <ResponsiveContainer width="100%" height={350}>
+            <ResponsiveContainer width="100%" height={400}>
               <ComposedChart data={chartData.monthlyData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                <defs>
+                  <linearGradient id="principalGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={COLORS.primary} stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor={COLORS.primary} stopOpacity={0.2}/>
+                  </linearGradient>
+                  <linearGradient id="interestGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={COLORS.warning} stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor={COLORS.warning} stopOpacity={0.2}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" strokeOpacity={0.6} />
                 <XAxis 
                   dataKey="month" 
-                  stroke="#64748b"
-                  fontSize={12}
+                  stroke="#6b7280"
+                  fontSize={13}
                   tickLine={false}
+                  axisLine={false}
+                  tick={{ fill: '#6b7280', fontWeight: 500 }}
                 />
                 <YAxis 
                   yAxisId="amount"
                   orientation="left"
-                  stroke="#64748b"
-                  fontSize={12}
+                  stroke="#6b7280"
+                  fontSize={13}
                   tickLine={false}
+                  axisLine={false}
+                  tick={{ fill: '#6b7280', fontWeight: 500 }}
                   tickFormatter={(value) => `₹${(value / 100000).toFixed(0)}L`}
                 />
                 <YAxis 
                   yAxisId="count"
                   orientation="right"
-                  stroke="#64748b"
-                  fontSize={12}
+                  stroke="#6b7280"
+                  fontSize={13}
                   tickLine={false}
+                  axisLine={false}
+                  tick={{ fill: '#6b7280', fontWeight: 500 }}
                 />
-                <Tooltip 
-                  contentStyle={{
-                    backgroundColor: 'white',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '8px',
-                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
-                  }}
-                  formatter={(value, name) => {
-                    if (name === 'Loan Count') return [value, name];
-                    return [`₹${value.toLocaleString()}`, name];
-                  }}
-                  labelFormatter={(label) => `Month: ${label}`}
+                <Tooltip content={<CustomTooltip />} />
+                <Legend content={<CustomLegend />} />
+                <Bar 
+                  yAxisId="amount" 
+                  dataKey="totalPrincipal" 
+                  fill="url(#principalGradient)" 
+                  name="Principal Amount" 
+                  radius={[6, 6, 0, 0]}
+                  stroke={COLORS.primary}
+                  strokeWidth={1}
                 />
-                <Bar yAxisId="amount" dataKey="totalPrincipal" fill="#00adb5" name="Principal Amount" radius={[4, 4, 0, 0]} />
-                <Bar yAxisId="amount" dataKey="totalInterest" fill="#f59e0b" name="Interest Amount" radius={[4, 4, 0, 0]} />
-                <Line yAxisId="count" type="monotone" dataKey="loanCount" stroke="#10b981" strokeWidth={3} name="Loan Count" dot={{ fill: '#10b981', strokeWidth: 2, r: 4 }} />
+                <Bar 
+                  yAxisId="amount" 
+                  dataKey="totalInterest" 
+                  fill="url(#interestGradient)" 
+                  name="Interest Amount" 
+                  radius={[6, 6, 0, 0]}
+                  stroke={COLORS.warning}
+                  strokeWidth={1}
+                />
+                <Line 
+                  yAxisId="count" 
+                  type="monotone" 
+                  dataKey="loanCount" 
+                  stroke={COLORS.success} 
+                  strokeWidth={4} 
+                  name="Loan Count" 
+                  dot={{ fill: COLORS.success, strokeWidth: 2, r: 6, stroke: '#fff' }}
+                  activeDot={{ r: 8, stroke: COLORS.success, strokeWidth: 2, fill: '#fff' }}
+                />
               </ComposedChart>
             </ResponsiveContainer>
           </div>
@@ -436,30 +513,33 @@ const Dashboard = () => {
             </div>
           </div>
           <div className="chart-content">
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height={320}>
               <PieChart>
                 <Pie
                   data={chartData.statusData}
                   cx="50%"
                   cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                  outerRadius={100}
-                  fill="#8884d8"
+                  innerRadius={60}
+                  outerRadius={120}
+                  paddingAngle={2}
                   dataKey="value"
+                  stroke="#fff"
+                  strokeWidth={3}
                 >
                   {chartData.statusData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
+                    <Cell 
+                      key={`cell-${index}`} 
+                      fill={entry.color}
+                      style={{
+                        filter: 'drop-shadow(0px 2px 4px rgba(0,0,0,0.1))'
+                      }}
+                    />
                   ))}
                 </Pie>
-                <Tooltip 
-                  contentStyle={{
-                    backgroundColor: 'white',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '8px',
-                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
-                  }}
-                  formatter={(value) => [value, 'Loans']} 
+                <Tooltip content={<CustomTooltip />} />
+                <Legend 
+                  content={<CustomLegend />}
+                  wrapperStyle={{ paddingTop: '20px' }}
                 />
               </PieChart>
             </ResponsiveContainer>
@@ -475,48 +555,54 @@ const Dashboard = () => {
             </div>
           </div>
           <div className="chart-content">
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height={320}>
               <AreaChart data={chartData.monthlyData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                <defs>
+                  <linearGradient id="balanceGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={COLORS.secondary} stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor={COLORS.secondary} stopOpacity={0.1}/>
+                  </linearGradient>
+                  <linearGradient id="totalGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={COLORS.accent} stopOpacity={0.6}/>
+                    <stop offset="95%" stopColor={COLORS.accent} stopOpacity={0.05}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" strokeOpacity={0.6} />
                 <XAxis 
                   dataKey="month" 
-                  stroke="#64748b"
-                  fontSize={12}
+                  stroke="#6b7280"
+                  fontSize={13}
                   tickLine={false}
+                  axisLine={false}
+                  tick={{ fill: '#6b7280', fontWeight: 500 }}
                 />
                 <YAxis 
-                  stroke="#64748b"
-                  fontSize={12}
+                  stroke="#6b7280"
+                  fontSize={13}
                   tickLine={false}
+                  axisLine={false}
+                  tick={{ fill: '#6b7280', fontWeight: 500 }}
                   tickFormatter={(value) => `₹${(value / 100000).toFixed(0)}L`}
                 />
-                <Tooltip 
-                  contentStyle={{
-                    backgroundColor: 'white',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '8px',
-                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
-                  }}
-                  formatter={(value, name) => [`₹${value.toLocaleString()}`, name]}
-                  labelFormatter={(label) => `Month: ${label}`}
-                />
+                <Tooltip content={<CustomTooltip />} />
                 <Area 
                   type="monotone" 
                   dataKey="currentBalance" 
-                  stackId="1" 
-                  stroke="#8b5cf6" 
-                  fill="#8b5cf6" 
-                  fillOpacity={0.6}
+                  stroke={COLORS.secondary}
+                  strokeWidth={3}
+                  fill="url(#balanceGradient)"
                   name="Outstanding Balance"
+                  dot={{ fill: COLORS.secondary, strokeWidth: 2, r: 4, stroke: '#fff' }}
+                  activeDot={{ r: 6, stroke: COLORS.secondary, strokeWidth: 2, fill: '#fff' }}
                 />
                 <Area 
                   type="monotone" 
                   dataKey="totalAmount" 
-                  stackId="2" 
-                  stroke="#00adb5" 
-                  fill="#00adb5" 
-                  fillOpacity={0.3}
+                  stroke={COLORS.accent}
+                  strokeWidth={2}
+                  fill="url(#totalGradient)"
                   name="Total Amount"
+                  strokeDasharray="5 5"
                 />
               </AreaChart>
             </ResponsiveContainer>
@@ -532,46 +618,76 @@ const Dashboard = () => {
             </div>
           </div>
           <div className="chart-content">
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height={320}>
               <ComposedChart data={chartData.performanceData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                <defs>
+                  <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={COLORS.success} stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor={COLORS.success} stopOpacity={0.2}/>
+                  </linearGradient>
+                  <linearGradient id="collectionsGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={COLORS.info} stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor={COLORS.info} stopOpacity={0.2}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" strokeOpacity={0.6} />
                 <XAxis 
                   dataKey="month" 
-                  stroke="#64748b"
-                  fontSize={12}
+                  stroke="#6b7280"
+                  fontSize={13}
                   tickLine={false}
+                  axisLine={false}
+                  tick={{ fill: '#6b7280', fontWeight: 500 }}
                 />
                 <YAxis 
                   yAxisId="amount"
                   orientation="left"
-                  stroke="#64748b"
-                  fontSize={12}
+                  stroke="#6b7280"
+                  fontSize={13}
                   tickLine={false}
+                  axisLine={false}
+                  tick={{ fill: '#6b7280', fontWeight: 500 }}
                   tickFormatter={(value) => `₹${(value / 100000).toFixed(0)}L`}
                 />
                 <YAxis 
                   yAxisId="percent"
                   orientation="right"
-                  stroke="#64748b"
-                  fontSize={12}
+                  stroke="#6b7280"
+                  fontSize={13}
                   tickLine={false}
+                  axisLine={false}
+                  tick={{ fill: '#6b7280', fontWeight: 500 }}
                   tickFormatter={(value) => `${value.toFixed(0)}%`}
                 />
-                <Tooltip 
-                  contentStyle={{
-                    backgroundColor: 'white',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '8px',
-                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
-                  }}
-                  formatter={(value, name) => {
-                    if (name === 'Collection Efficiency') return [`${value.toFixed(1)}%`, name];
-                    return [`₹${value.toLocaleString()}`, name];
-                  }}
+                <Tooltip content={<CustomTooltip />} />
+                <Bar 
+                  yAxisId="amount" 
+                  dataKey="revenue" 
+                  fill="url(#revenueGradient)" 
+                  name="Revenue" 
+                  radius={[6, 6, 0, 0]}
+                  stroke={COLORS.success}
+                  strokeWidth={1}
                 />
-                <Bar yAxisId="amount" dataKey="revenue" fill="#10b981" name="Revenue" radius={[4, 4, 0, 0]} />
-                <Bar yAxisId="amount" dataKey="collections" fill="#3b82f6" name="Collections" radius={[4, 4, 0, 0]} />
-                <Line yAxisId="percent" type="monotone" dataKey="efficiency" stroke="#ef4444" strokeWidth={3} name="Collection Efficiency" dot={{ fill: '#ef4444', strokeWidth: 2, r: 4 }} />
+                <Bar 
+                  yAxisId="amount" 
+                  dataKey="collections" 
+                  fill="url(#collectionsGradient)" 
+                  name="Collections" 
+                  radius={[6, 6, 0, 0]}
+                  stroke={COLORS.info}
+                  strokeWidth={1}
+                />
+                <Line 
+                  yAxisId="percent" 
+                  type="monotone" 
+                  dataKey="efficiency" 
+                  stroke={COLORS.danger} 
+                  strokeWidth={4} 
+                  name="Collection Efficiency" 
+                  dot={{ fill: COLORS.danger, strokeWidth: 2, r: 6, stroke: '#fff' }}
+                  activeDot={{ r: 8, stroke: COLORS.danger, strokeWidth: 2, fill: '#fff' }}
+                />
               </ComposedChart>
             </ResponsiveContainer>
           </div>
@@ -586,32 +702,31 @@ const Dashboard = () => {
             </div>
           </div>
           <div className="chart-content">
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={chartData.ornamentData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={100}
-                  paddingAngle={5}
-                  dataKey="value"
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                >
-                  {chartData.ornamentData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip 
-                  contentStyle={{
-                    backgroundColor: 'white',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '8px',
-                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
-                  }}
-                  formatter={(value, name) => [`₹${value.toLocaleString()}`, 'Value']}
+            <ResponsiveContainer width="100%" height={320}>
+              <RadialBarChart 
+                cx="50%" 
+                cy="50%" 
+                innerRadius="20%" 
+                outerRadius="90%" 
+                data={chartData.ornamentData.map((item, index) => ({
+                  ...item,
+                  fill: item.color,
+                  uv: (item.value / Math.max(...chartData.ornamentData.map(d => d.value))) * 100
+                }))}
+              >
+                <RadialBar 
+                  dataKey="uv" 
+                  cornerRadius={10} 
+                  fill="#8884d8"
+                  stroke="#fff"
+                  strokeWidth={2}
                 />
-              </PieChart>
+                <Tooltip content={<CustomTooltip />} />
+                <Legend 
+                  content={<CustomLegend />}
+                  wrapperStyle={{ paddingTop: '20px' }}
+                />
+              </RadialBarChart>
             </ResponsiveContainer>
           </div>
         </div>
@@ -625,39 +740,60 @@ const Dashboard = () => {
             </div>
           </div>
           <div className="chart-content">
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height={320}>
               <LineChart data={chartData.interestTrendData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                <defs>
+                  <linearGradient id="interestLineGradient" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stopColor={COLORS.warning} stopOpacity={1}/>
+                    <stop offset="100%" stopColor={COLORS.danger} stopOpacity={1}/>
+                  </linearGradient>
+                  <filter id="glow">
+                    <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                    <feMerge> 
+                      <feMergeNode in="coloredBlur"/>
+                      <feMergeNode in="SourceGraphic"/>
+                    </feMerge>
+                  </filter>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" strokeOpacity={0.6} />
                 <XAxis 
                   dataKey="month" 
-                  stroke="#64748b"
-                  fontSize={12}
+                  stroke="#6b7280"
+                  fontSize={13}
                   tickLine={false}
+                  axisLine={false}
+                  tick={{ fill: '#6b7280', fontWeight: 500 }}
                 />
                 <YAxis 
-                  stroke="#64748b"
-                  fontSize={12}
+                  stroke="#6b7280"
+                  fontSize={13}
                   tickLine={false}
+                  axisLine={false}
+                  tick={{ fill: '#6b7280', fontWeight: 500 }}
                   tickFormatter={(value) => `₹${(value / 100000).toFixed(0)}L`}
                 />
-                <Tooltip 
-                  contentStyle={{
-                    backgroundColor: 'white',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '8px',
-                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
-                  }}
-                  formatter={(value, name) => [`₹${value.toLocaleString()}`, name]}
-                  labelFormatter={(label) => `Month: ${label}`}
-                />
+                <Tooltip content={<CustomTooltip />} />
                 <Line 
                   type="monotone" 
                   dataKey="totalInterest" 
-                  stroke="#f59e0b" 
-                  strokeWidth={4}
+                  stroke="url(#interestLineGradient)"
+                  strokeWidth={5}
                   name="Total Interest"
-                  dot={{ fill: '#f59e0b', strokeWidth: 2, r: 6 }}
-                  activeDot={{ r: 8, stroke: '#f59e0b', strokeWidth: 2, fill: '#fff' }}
+                  dot={{ 
+                    fill: COLORS.warning, 
+                    strokeWidth: 3, 
+                    r: 8,
+                    stroke: '#fff',
+                    filter: 'url(#glow)'
+                  }}
+                  activeDot={{ 
+                    r: 12, 
+                    stroke: COLORS.warning, 
+                    strokeWidth: 3, 
+                    fill: '#fff',
+                    filter: 'url(#glow)'
+                  }}
+                  filter="url(#glow)"
                 />
               </LineChart>
             </ResponsiveContainer>
