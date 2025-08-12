@@ -30,7 +30,6 @@ import {
   FaArrowUp,
   FaArrowDown,
   FaEquals,
-  FaArrowUp,
   FaCoins
 } from 'react-icons/fa';
 import { calculateLoanInterest, getCurrentBalance, getLoanStatus } from "../utils/interestCalculator";
