@@ -8,9 +8,9 @@ const Topbar = ({ onMobileMenuToggle }) => {
 
   // Mapping paths to headings
   const getPageTitle = (path) => {
-    if (path === "/dashboard") return "Dashboard";
-    if (path === "/dashboard/loans") return "Loans";
-    if (path === "/dashboard/reports") return "Reports";
+    if (path === "/") return "Dashboard";
+    if (path === "/loans") return "Loans";
+    if (path === "/reports") return "Reports";
     return "";
   };
 

@@ -4,7 +4,6 @@ import {
   FaTachometerAlt,
   FaMoneyCheckAlt,
   FaChartBar,
-  FaSignOutAlt,
   FaTimes,
 } from "react-icons/fa";
 import "./Sidebar.css";
@@ -43,22 +42,18 @@ const Sidebar = ({ isOpen, onClose }) => {
         <img src={logo} alt="CrediFlow Logo" className="sidebar-logo" />
       </div>
       <nav className="sidebar-nav">
-          <NavLink to="/dashboard" end className={getLinkClass} onClick={handleLinkClick}>
+          <NavLink to="/" end className={getLinkClass} onClick={handleLinkClick}>
             <FaTachometerAlt className="sidebar-icon" />
             <span>Dashboard</span>
           </NavLink>
-          <NavLink to="/dashboard/loans" className={getLinkClass} onClick={handleLinkClick}>
+          <NavLink to="/loans" className={getLinkClass} onClick={handleLinkClick}>
             <FaMoneyCheckAlt className="sidebar-icon" />
             <span>Loans</span>
           </NavLink>
-          <NavLink to="/dashboard/reports" className={getLinkClass} onClick={handleLinkClick}>
+          <NavLink to="/reports" className={getLinkClass} onClick={handleLinkClick}>
             <FaChartBar className="sidebar-icon" />
             <span>Reports</span>
           </NavLink>
-          <NavLink to="/" className="sidebar-link" onClick={handleLinkClick}>
-          <FaSignOutAlt className="sidebar-icon" />
-          <span>Logout</span>
-        </NavLink>
       </nav>
       </aside>
     </>
