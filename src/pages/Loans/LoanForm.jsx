@@ -67,7 +67,6 @@ const LoanForm = ({ loan, onSubmit, onCancel }) => {
   // Validation functions
   const validateField = (name, value) => {
     const newErrors = { ...errors };
-    
     switch (name) {
       case 'loanid':
         if (!value.trim()) {
@@ -78,7 +77,6 @@ const LoanForm = ({ loan, onSubmit, onCancel }) => {
           delete newErrors.loanid;
         }
         break;
-        
       case 'customerName':
         if (!value.trim()) {
           newErrors.customerName = 'Customer name is required';
@@ -90,7 +88,6 @@ const LoanForm = ({ loan, onSubmit, onCancel }) => {
           delete newErrors.customerName;
         }
         break;
-        
       case 'relationName':
         if (!value.trim()) {
           newErrors.relationName = 'Relation name is required';
@@ -102,7 +99,6 @@ const LoanForm = ({ loan, onSubmit, onCancel }) => {
           delete newErrors.relationName;
         }
         break;
-        
       case 'phoneNumber':
         if (!value.trim()) {
           newErrors.phoneNumber = 'Phone number is required';
@@ -112,7 +108,6 @@ const LoanForm = ({ loan, onSubmit, onCancel }) => {
           delete newErrors.phoneNumber;
         }
         break;
-        
       case 'address':
         if (!value.trim()) {
           newErrors.address = 'Address is required';
@@ -122,27 +117,34 @@ const LoanForm = ({ loan, onSubmit, onCancel }) => {
           delete newErrors.address;
         }
         break;
-        
       case 'goldWeight':
-        if ((formData.ornamentType === 'gold' || formData.ornamentType === 'both') && (!value || parseFloat(value) <= 0)) {
-          newErrors.goldWeight = 'Gold weight must be greater than 0';
-        } else if (value && parseFloat(value) > 1000) {
-          newErrors.goldWeight = 'Gold weight seems too high (max 1000g)';
+        if (formData.ornamentType === 'gold' || formData.ornamentType === 'both') {
+          if (!value || parseFloat(value) <= 0) {
+            newErrors.goldWeight = 'Gold weight must be greater than 0';
+          } else if (parseFloat(value) > 1000) {
+            newErrors.goldWeight = 'Gold weight seems too high (max 1000g)';
+          } else {
+            delete newErrors.goldWeight;
+          }
         } else {
+          // Not required, so clear error
           delete newErrors.goldWeight;
         }
         break;
-        
       case 'silverWeight':
-        if ((formData.ornamentType === 'silver' || formData.ornamentType === 'both') && (!value || parseFloat(value) <= 0)) {
-          newErrors.silverWeight = 'Silver weight must be greater than 0';
-        } else if (value && parseFloat(value) > 5000) {
-          newErrors.silverWeight = 'Silver weight seems too high (max 5000g)';
+        if (formData.ornamentType === 'silver' || formData.ornamentType === 'both') {
+          if (!value || parseFloat(value) <= 0) {
+            newErrors.silverWeight = 'Silver weight must be greater than 0';
+          } else if (parseFloat(value) > 5000) {
+            newErrors.silverWeight = 'Silver weight seems too high (max 5000g)';
+          } else {
+            delete newErrors.silverWeight;
+          }
         } else {
+          // Not required, so clear error
           delete newErrors.silverWeight;
         }
         break;
-        
       case 'loanAmount':
         if (!value || parseFloat(value) <= 0) {
           newErrors.loanAmount = 'Loan amount must be greater than 0';
@@ -154,7 +156,6 @@ const LoanForm = ({ loan, onSubmit, onCancel }) => {
           delete newErrors.loanAmount;
         }
         break;
-        
       case 'interestRate':
         if (!value || parseFloat(value) <= 0) {
           newErrors.interestRate = 'Interest rate must be greater than 0';
@@ -164,7 +165,6 @@ const LoanForm = ({ loan, onSubmit, onCancel }) => {
           delete newErrors.interestRate;
         }
         break;
-        
       case 'loanDate':
         if (!value) {
           newErrors.loanDate = 'Loan date is required';
@@ -173,7 +173,6 @@ const LoanForm = ({ loan, onSubmit, onCancel }) => {
           const today = new Date();
           const oneYearAgo = new Date();
           oneYearAgo.setFullYear(today.getFullYear() - 1);
-          
           if (selectedDate > today) {
             newErrors.loanDate = 'Loan date cannot be in the future';
           } else if (selectedDate < oneYearAgo) {
@@ -183,11 +182,9 @@ const LoanForm = ({ loan, onSubmit, onCancel }) => {
           }
         }
         break;
-        
       default:
         break;
     }
-    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -227,46 +224,52 @@ const LoanForm = ({ loan, onSubmit, onCancel }) => {
     validateField(name, value);
   };
 
- const handleSubmit = async (e) => {
-  e.preventDefault();
-  setIsSubmitting(true);
 
-  // Validate form before submission
-  if (!validateForm()) {
-    setIsSubmitting(false);
-    return;
-  }
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
 
-  const loanData = {
-    ...formData,
-    estimatedValue,
-    goldRate,
-    silverRate,
-    id: loan?.id || Date.now().toString()
-  };
-
-  try {
-    const response = await fetch("https://localhost:7202/api/Loan", {
-      method: loan?.id ? "PUT" : "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(loanData),
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
+    // Validate form before submission
+    if (!validateForm()) {
+      setIsSubmitting(false);
+      return;
     }
 
-    const savedLoan = await response.json();
-    onSubmit(savedLoan); // Pass the data back to Loans.jsx
-  } catch (error) {
-    console.error("Failed to save loan:", error);
-    alert("Failed to save loan. Check console for details.");
-  } finally {
+    // Convert empty strings to null for optional fields
+    const goldWeight = formData.goldWeight === '' ? null : formData.goldWeight;
+    const silverWeight = formData.silverWeight === '' ? null : formData.silverWeight;
+    const notes = formData.notes === '' ? null : formData.notes;
+    const dueDate = formData.dueDate === '' ? null : formData.dueDate;
+
+    // Prepare loan data (do NOT include Id in payload for PUT)
+    let loanData = {
+      LoanId: formData.loanid || null,
+      CustomerName: formData.customerName || null,
+      RelationName: formData.relationName || null,
+      RelationType: formData.relationType || null,
+      Title: formData.title || null,
+      PhoneNumber: formData.phoneNumber || null,
+      Address: formData.address || null,
+      OrnamentType: formData.ornamentType || null,
+      GoldWeight: goldWeight,
+      SilverWeight: silverWeight,
+      LoanAmount: formData.loanAmount === '' ? null : formData.loanAmount,
+      InterestRate: formData.interestRate === '' ? null : formData.interestRate,
+      LoanDate: formData.loanDate || null,
+      DueDate: dueDate,
+      Notes: notes,
+      EstimatedValue: estimatedValue,
+      GoldRate: goldRate,
+      SilverRate: silverRate
+    };
+
+    // Log payload for debugging
+    console.log("Payload sent to API:", loanData);
+
+    // Call parent onSubmit to handle API call
+    onSubmit(loanData);
     setIsSubmitting(false);
-  }
-};
+  };
 
 
   return (

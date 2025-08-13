@@ -37,9 +37,10 @@ const Loans = () => {
 
   const fetchLoans = async () => {
     try {
-      const response = await fetch("https://localhost:7202/api/Loan");
+      const response = await fetch("https://localhost:7133/api/Loan");
       if (!response.ok) throw new Error("Failed to fetch loans");
       const data = await response.json();
+      console.log("Fetched loans from API:", data);
       setLoans(data);
     } catch (err) {
       console.error(err);
@@ -66,10 +67,13 @@ const Loans = () => {
   );
 
   const filteredLoans = loans.filter((loan) => {
+
+    const search = searchTerm ? searchTerm.toLowerCase() : '';
     const matchesSearch =
-      loan.customerName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      loan.phoneNumber?.includes(searchTerm) ||
-      loan.id?.toLowerCase().includes(searchTerm.toLowerCase());
+      (loan.customerName && loan.customerName.toLowerCase().includes(search)) ||
+      (loan.phoneNumber && loan.phoneNumber.includes(searchTerm)) ||
+      (loan.LoanId !== undefined && loan.LoanId !== null && String(loan.LoanId).toLowerCase().includes(search)) ||
+      (loan.id !== undefined && loan.id !== null && String(loan.id).toLowerCase().includes(search));
 
     const matchesFilter =
       filterStatus === "all" ||
@@ -107,7 +111,7 @@ const Loans = () => {
   const handleDeleteLoan = async (loanId) => {
     if (window.confirm("Are you sure you want to delete this loan?")) {
       try {
-        await fetch(`https://localhost:7202/api/Loan/${loanId}`, {
+        await fetch(`https://localhost:7133/api/Loan/${loanId}`, {
           method: "DELETE",
         });
         fetchLoans();
@@ -145,43 +149,30 @@ const Loans = () => {
     setShowPaymentModal(true);
   };
 
-  const handlePaymentSubmit = (loanId, paymentData) => {
-    setLoans((prevLoans) =>
-      prevLoans.map((loan) => {
-        if (loan.id === loanId) {
-          const updatedPayments = [...(loan.payments || []), {
-            id: Date.now().toString(),
-            date: paymentData.date,
-            partialPayment: paymentData.partialPayment || 0,
-            extraLoan: paymentData.extraLoan || 0,
-            timestamp: new Date().toISOString(),
-          }];
-
-          const newLoanAmount =
-            parseFloat(loan.loanAmount) + (paymentData.extraLoan || 0);
-
-          return {
-            ...loan,
-            loanAmount: newLoanAmount.toString(),
-            payments: updatedPayments,
-          };
-        }
-        return loan;
-      })
-    );
-
+  const handlePaymentSubmit = async (loanId, paymentData) => {
+    try {
+      await fetch(`https://localhost:7133/api/Loan/${loanId}/payment`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(paymentData),
+      });
+      await fetchLoans();
+    } catch (error) {
+      alert("Failed to save payment/extra loan. Check backend.");
+      console.error(error);
+    }
     setShowPaymentModal(false);
     setPaymentLoan(null);
   };
 
   const handleFormSubmit = async (loanData) => {
     try {
-      const response = await fetch("https://localhost:7202/api/Loan", {
+      const response = await fetch("https://localhost:7133/api/Loan", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ dto: loanData }),
+        body: JSON.stringify(loanData),
       });
 
       if (!response.ok) {

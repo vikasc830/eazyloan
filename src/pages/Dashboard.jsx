@@ -107,7 +107,7 @@ const Dashboard = () => {
   // Fetch loans data
   const fetchLoans = async () => {
     try {
-      const response = await fetch("https://localhost:7202/api/Loan", {
+      const response = await fetch("https://localhost:7133/api/Loan", {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -377,6 +377,26 @@ const Dashboard = () => {
           <p>Real-time insights into your loan portfolio performance</p>
         </div>
         <div className="header-controls">
+          <button
+            className="refresh-btn"
+            onClick={() => {
+              setLoading(true);
+              fetchLoans();
+            }}
+            style={{
+              marginRight: '1rem',
+              padding: '0.5rem 1rem',
+              background: '#06b6d4',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontWeight: 600
+            }}
+            title="Refresh dashboard data"
+          >
+            Refresh
+          </button>
           <select 
             value={selectedTimeframe} 
             onChange={(e) => setSelectedTimeframe(e.target.value)}

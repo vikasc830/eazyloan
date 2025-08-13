@@ -42,14 +42,18 @@ const LoanList = ({ loans, onEdit, onDelete, onRenew, onView }) => {
 
   const filteredAndSortedLoans = loans
     .filter(loan => {
-      const matchesSearch = 
-        loan.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        loan.phoneNumber.includes(searchTerm) ||
-        loan.id.includes(searchTerm);
-      
+
+
+      const search = searchTerm ? searchTerm.toLowerCase() : '';
+      const matchesSearch =
+        (loan.customerName && loan.customerName.toLowerCase().includes(search)) ||
+        (loan.phoneNumber && loan.phoneNumber.includes(searchTerm)) ||
+        (loan.LoanId !== undefined && loan.LoanId !== null && String(loan.LoanId).toLowerCase().includes(search)) ||
+        (loan.id !== undefined && loan.id !== null && String(loan.id).toLowerCase().includes(search));
+
       const status = getStatus(loan);
       const matchesFilter = filterStatus === 'all' || status.toLowerCase().includes(filterStatus.toLowerCase());
-      
+
       return matchesSearch && matchesFilter;
     })
     .sort((a, b) => {
@@ -161,7 +165,7 @@ const LoanList = ({ loans, onEdit, onDelete, onRenew, onView }) => {
               
               return (
                 <tr key={loan.id}>
-                  <td className="loan-id">#{loan.id.slice(-6)}</td>
+                  <td className="loan-id">{loan.LoanId ? loan.LoanId : `#${loan.id.slice(-6)}`}</td>
                   <td>
                     <div className="customer-info">
                       <strong>{loan.title} {loan.customerName}</strong>
