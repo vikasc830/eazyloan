@@ -13,14 +13,35 @@ const PaymentModal = ({ loan, onClose, onSubmit }) => {
   const currentBalance = getCurrentBalance(loan);
 
   const handleSubmit = () => {
-    if (!partialPayment && !extraLoan) {
-      alert("Please enter either a partial payment or an extra loan.");
+    const paymentAmount = parseFloat(partialPayment || 0);
+    const extraLoanAmount = parseFloat(extraLoan || 0);
+    
+    if (paymentAmount <= 0 && extraLoanAmount <= 0) {
+      alert("Please enter either a partial payment amount or an extra loan amount.");
       return;
+    }
+    
+    if (!paymentDate) {
+      alert("Please select a transaction date.");
+      return;
+    }
+    
+    // Validate amounts
+    if (paymentAmount < 0 || extraLoanAmount < 0) {
+      alert("Amounts cannot be negative.");
+      return;
+    }
+    
+    if (paymentAmount > currentBalance && paymentAmount > 0) {
+      const confirmOverpayment = window.confirm(
+        `Payment amount (₹${paymentAmount.toLocaleString()}) exceeds current balance (₹${currentBalance.toLocaleString()}). Do you want to continue?`
+      );
+      if (!confirmOverpayment) return;
     }
 
     onSubmit(loan.id, {
-      partialPayment: parseFloat(partialPayment || 0),
-      extraLoan: parseFloat(extraLoan || 0),
+      partialPayment: paymentAmount,
+      extraLoan: extraLoanAmount,
       date: paymentDate,
     });
   };

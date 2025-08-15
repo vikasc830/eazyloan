@@ -151,7 +151,52 @@ const Loans = () => {
 
   const handlePaymentSubmit = async (loanId, paymentData) => {
     try {
-      await fetch(`https://localhost:7133/api/Loan/${loanId}/payment`, {
+      // First, get the current loan data
+      const loanResponse = await fetch(`https://localhost:7133/api/Loan/${loanId}`);
+      if (!loanResponse.ok) throw new Error("Failed to fetch loan data");
+      const currentLoan = await loanResponse.json();
+      
+      // Prepare the updated loan data with new payment
+      const updatedPayments = [...(currentLoan.payments || []), {
+        id: Date.now().toString(),
+        date: paymentData.date,
+        partialPayment: paymentData.partialPayment || 0,
+        extraLoan: paymentData.extraLoan || 0
+      }];
+      
+      const updatedLoanData = {
+        ...currentLoan,
+        payments: updatedPayments
+      };
+      
+      // Update the loan with new payment data
+      const response = await fetch(`https://localhost:7133/api/Loan/${loanId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatedLoanData),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Error updating loan with payment:", errorData);
+        throw new Error("Failed to save payment");
+      }
+      
+      // Refresh the loans list
+      await fetchLoans();
+      
+      // Show success message
+      alert("Payment/Extra loan saved successfully!");
+      
+    } catch (error) {
+      console.error("Payment submission error:", error);
+      alert(`Failed to save payment/extra loan: ${error.message}`);
+    }
+    
+    setShowPaymentModal(false);
+    setPaymentLoan(null);
+  };
+
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(paymentData),

@@ -241,7 +241,7 @@ const LoanForm = ({ loan, onSubmit, onCancel }) => {
     const notes = formData.notes === '' ? null : formData.notes;
     const dueDate = formData.dueDate === '' ? null : formData.dueDate;
 
-    // Prepare loan data (do NOT include Id in payload for PUT)
+    // Prepare loan data
     let loanData = {
       LoanId: formData.loanid || null,
       CustomerName: formData.customerName || null,
@@ -260,7 +260,8 @@ const LoanForm = ({ loan, onSubmit, onCancel }) => {
       Notes: notes,
       EstimatedValue: estimatedValue,
       GoldRate: goldRate,
-      SilverRate: silverRate
+      SilverRate: silverRate,
+      Payments: loan ? loan.payments || [] : [] // Preserve existing payments when editing
     };
 
     // Log payload for debugging
