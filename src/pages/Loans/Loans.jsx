@@ -197,19 +197,6 @@ const Loans = () => {
     setPaymentLoan(null);
   };
 
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(paymentData),
-      });
-      await fetchLoans();
-    } catch (error) {
-      alert("Failed to save payment/extra loan. Check backend.");
-      console.error(error);
-    }
-    setShowPaymentModal(false);
-    setPaymentLoan(null);
-  };
-
   const handleFormSubmit = async (loanData) => {
     try {
       const response = await fetch("https://localhost:7133/api/Loan", {
