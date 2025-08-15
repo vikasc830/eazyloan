@@ -257,7 +257,7 @@ const LoanDetails = ({ loan, onClose }) => {
           )}
 
           {/* Payment History */}
-          {loan.payments && loan.payments.length > 0 && (
+          {((loan.payments && loan.payments.length > 0) || (loan.Payments && loan.Payments.length > 0)) && (
             <div className="details-card full-width">
               <div className="card-header">
                 <FaHistory className="card-icon" />
@@ -265,23 +265,23 @@ const LoanDetails = ({ loan, onClose }) => {
               </div>
               <div className="card-content">
                 <div className="payment-timeline">
-                  {loan.payments.map((payment, index) => (
+                  {(loan.payments || loan.Payments || []).map((payment, index) => (
                     <div key={payment.id || index} className="payment-entry">
                       <div className="payment-date">
                         <div className="date-circle"></div>
-                        <span>{new Date(payment.date).toLocaleDateString()}</span>
+                        <span>{new Date(payment.date || payment.Date).toLocaleDateString()}</span>
                       </div>
                       <div className="payment-details">
-                        {payment.partialPayment > 0 && (
+                        {(payment.partialPayment || payment.PartialPayment || 0) > 0 && (
                           <div className="payment-item received">
                             <div className="payment-type">Payment Received</div>
-                            <div className="payment-amount">₹{payment.partialPayment.toLocaleString()}</div>
+                            <div className="payment-amount">₹{(payment.partialPayment || payment.PartialPayment).toLocaleString()}</div>
                           </div>
                         )}
-                        {payment.extraLoan > 0 && (
+                        {(payment.extraLoan || payment.ExtraLoan || 0) > 0 && (
                           <div className="payment-item given">
                             <div className="payment-type">Extra Loan Given</div>
-                            <div className="payment-amount">₹{payment.extraLoan.toLocaleString()}</div>
+                            <div className="payment-amount">₹{(payment.extraLoan || payment.ExtraLoan).toLocaleString()}</div>
                           </div>
                         )}
                       </div>

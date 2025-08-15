@@ -22,12 +22,13 @@ export const calculateLoanInterest = (loan) => {
     today: today.toISOString(),
     monthlyInterestRate,
     originalLoanAmount,
-    payments: loan.payments,
-    paymentsCount: loan.payments ? loan.payments.length : 0
+    payments: loan.payments || loan.Payments,
+    paymentsCount: (loan.payments || loan.Payments) ? (loan.payments || loan.Payments).length : 0
   });
   
   // Sort payments by date
-  const sortedPayments = (loan.payments || []).sort((a, b) => new Date(a.date) - new Date(b.date));
+  const payments = loan.payments || loan.Payments || [];
+  const sortedPayments = payments.sort((a, b) => new Date(a.date || a.Date) - new Date(b.date || b.Date));
   
   let totalInterest = 0;
   const interestBreakdown = [];
@@ -58,11 +59,11 @@ export const calculateLoanInterest = (loan) => {
     let lastDate = loanDate;
     
     sortedPayments.forEach((payment, index) => {
-      const paymentDate = new Date(payment.date);
+      const paymentDate = new Date(payment.date || payment.Date);
       console.log(`Processing payment ${index + 1}:`, {
         date: paymentDate.toISOString(),
-        partialPayment: payment.partialPayment,
-        extraLoan: payment.extraLoan,
+        partialPayment: payment.partialPayment || payment.PartialPayment,
+        extraLoan: payment.extraLoan || payment.ExtraLoan,
         currentPrincipal
       });
       
@@ -93,28 +94,30 @@ export const calculateLoanInterest = (loan) => {
       }
       
       // Process payment
-      if (payment.partialPayment > 0) {
-        console.log(`Processing partial payment: ₹${payment.partialPayment}`);
+      const partialPayment = payment.partialPayment || payment.PartialPayment || 0;
+      if (partialPayment > 0) {
+        console.log(`Processing partial payment: ₹${partialPayment}`);
         interestBreakdown.push({
           date: paymentDate,
           type: 'payment',
-          amount: -payment.partialPayment,
+          amount: -partialPayment,
           newPrincipal: currentPrincipal,
-          description: `Partial payment received: ₹${payment.partialPayment.toLocaleString()}`
+          description: `Partial payment received: ₹${partialPayment.toLocaleString()}`
         });
       }
       
       // Process extra loan
-      if (payment.extraLoan > 0) {
-        console.log(`Processing extra loan: ₹${payment.extraLoan}, old principal: ${currentPrincipal}`);
-        currentPrincipal += payment.extraLoan;
+      const extraLoan = payment.extraLoan || payment.ExtraLoan || 0;
+      if (extraLoan > 0) {
+        console.log(`Processing extra loan: ₹${extraLoan}, old principal: ${currentPrincipal}`);
+        currentPrincipal += extraLoan;
         console.log(`New principal after extra loan: ${currentPrincipal}`);
         interestBreakdown.push({
           date: paymentDate,
           type: 'extra_loan',
-          amount: payment.extraLoan,
+          amount: extraLoan,
           newPrincipal: currentPrincipal,
-          description: `Extra loan given: ₹${payment.extraLoan.toLocaleString()}`
+          description: `Extra loan given: ₹${extraLoan.toLocaleString()}`
         });
       }
       
@@ -213,8 +216,12 @@ const calculateMonthsDifference = (startDate, endDate) => {
  * @returns {number} - Total amount paid
  */
 export const calculateTotalPaid = (loan) => {
-  if (!loan.payments || loan.payments.length === 0) return 0;
-  return loan.payments.reduce((total, payment) => total + (payment.partialPayment || 0), 0);
+  const payments = loan.payments || loan.Payments || [];
+  if (payments.length === 0) return 0;
+  return payments.reduce((total, payment) => {
+    const partialPayment = payment.partialPayment || payment.PartialPayment || 0;
+    return total + partialPayment;
+  }, 0);
 };
 
 /**
@@ -223,8 +230,12 @@ export const calculateTotalPaid = (loan) => {
  * @returns {number} - Total extra loans
  */
 export const calculateTotalExtraLoans = (loan) => {
-  if (!loan.payments || loan.payments.length === 0) return 0;
-  return loan.payments.reduce((total, payment) => total + (payment.extraLoan || 0), 0);
+  const payments = loan.payments || loan.Payments || [];
+  if (payments.length === 0) return 0;
+  return payments.reduce((total, payment) => {
+    const extraLoan = payment.extraLoan || payment.ExtraLoan || 0;
+    return total + extraLoan;
+  }, 0);
 };
 
 /**

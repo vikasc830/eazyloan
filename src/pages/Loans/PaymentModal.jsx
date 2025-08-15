@@ -32,6 +32,16 @@ const PaymentModal = ({ loan, onClose, onSubmit }) => {
       return;
     }
     
+    // Validate date is not in the future
+    const selectedDate = new Date(paymentDate);
+    const today = new Date();
+    today.setHours(23, 59, 59, 999); // Set to end of today
+    
+    if (selectedDate > today) {
+      alert("Payment date cannot be in the future.");
+      return;
+    }
+    
     if (paymentAmount > currentBalance && paymentAmount > 0) {
       const confirmOverpayment = window.confirm(
         `Payment amount (₹${paymentAmount.toLocaleString()}) exceeds current balance (₹${currentBalance.toLocaleString()}). Do you want to continue?`
