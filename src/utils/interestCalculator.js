@@ -33,82 +33,78 @@ export const calculateLoanInterest = (loan) => {
   let totalInterest = 0;
   const interestBreakdown = [];
   let currentPrincipal = originalLoanAmount;
+  let totalExtraLoans = 0;
   
-  // If no payments, calculate simple interest from loan date to today
-  if (!sortedPayments || sortedPayments.length === 0) {
-    const monthsDiff = calculateMonthsDifference(loanDate, today);
-    console.log('No payments, months difference:', monthsDiff);
-    
-    if (monthsDiff > 0) {
-      totalInterest = currentPrincipal * monthlyInterestRate * monthsDiff;
-      console.log('Calculated interest:', totalInterest);
-      
-      interestBreakdown.push({
-        fromDate: loanDate,
-        toDate: today,
-        principal: currentPrincipal,
-        months: monthsDiff,
-        interest: totalInterest,
-        type: 'current',
-        description: `Interest for ${monthsDiff.toFixed(2)} months on ₹${currentPrincipal.toLocaleString()}`
-      });
-    }
-  } else {
+  // Calculate interest on original loan amount from loan date to today
+  const originalLoanMonths = calculateMonthsDifference(loanDate, today);
+  const originalLoanInterest = originalLoanAmount * monthlyInterestRate * originalLoanMonths;
+  totalInterest += originalLoanInterest;
+  
+  console.log('Original loan interest calculation:', {
+    amount: originalLoanAmount,
+    months: originalLoanMonths,
+    interest: originalLoanInterest
+  });
+  
+  interestBreakdown.push({
+    fromDate: loanDate,
+    toDate: today,
+    principal: originalLoanAmount,
+    months: originalLoanMonths,
+    interest: originalLoanInterest,
+    type: 'loan',
+    date: loanDate,
+    amount: originalLoanAmount,
+    newPrincipal: originalLoanAmount,
+    description: `Original loan: ₹${originalLoanAmount.toLocaleString()} from ${loanDate.toLocaleDateString()}`
+  });
+  
+  // Process each payment/extra loan
+  if (sortedPayments && sortedPayments.length > 0) {
     console.log('Processing payments:', sortedPayments);
-    // Process payments timeline
-    let lastDate = loanDate;
     
     sortedPayments.forEach((payment, index) => {
       const paymentDate = new Date(payment.date || payment.Date);
       console.log(`Processing payment ${index + 1}:`, {
         date: paymentDate.toISOString(),
         partialPayment: payment.partialPayment || payment.PartialPayment,
-        extraLoan: payment.extraLoan || payment.ExtraLoan,
-        currentPrincipal
+        extraLoan: payment.extraLoan || payment.ExtraLoan
       });
       
-      // Calculate interest for period before this payment/extra loan
-      if (currentPrincipal > 0 && paymentDate > lastDate) {
-        const monthsDiff = calculateMonthsDifference(lastDate, paymentDate);
-        const periodInterest = currentPrincipal * monthlyInterestRate * monthsDiff;
-        
-        console.log(`Interest for period ${lastDate.toISOString()} to ${paymentDate.toISOString()}:`, {
-          monthsDiff,
-          periodInterest,
-          principal: currentPrincipal
-        });
-        
-        if (periodInterest > 0) {
-          totalInterest += periodInterest;
-          
-          interestBreakdown.push({
-            fromDate: lastDate,
-            toDate: paymentDate,
-            principal: currentPrincipal,
-            months: monthsDiff,
-            interest: periodInterest,
-            type: 'period',
-            description: `Interest for ${monthsDiff.toFixed(2)} months on ₹${currentPrincipal.toLocaleString()}`
-          });
-        }
-      }
-      
-      // Process extra loan FIRST (this increases the principal)
+      // Process extra loan - calculate interest from extra loan date to today
       const extraLoan = payment.extraLoan || payment.ExtraLoan || 0;
       if (extraLoan > 0) {
-        console.log(`Processing extra loan: ₹${extraLoan}, old principal: ${currentPrincipal}`);
+        console.log(`Processing extra loan: ₹${extraLoan}`);
+        
+        // Calculate interest on this extra loan from its date to today
+        const extraLoanMonths = calculateMonthsDifference(paymentDate, today);
+        const extraLoanInterest = extraLoan * monthlyInterestRate * extraLoanMonths;
+        totalInterest += extraLoanInterest;
+        totalExtraLoans += extraLoan;
         currentPrincipal += extraLoan;
-        console.log(`New principal after extra loan: ${currentPrincipal}`);
+        
+        console.log('Extra loan interest calculation:', {
+          amount: extraLoan,
+          months: extraLoanMonths,
+          interest: extraLoanInterest,
+          newPrincipal: currentPrincipal
+        });
+        
         interestBreakdown.push({
           date: paymentDate,
+          fromDate: paymentDate,
+          toDate: today,
+          principal: extraLoan,
+          months: extraLoanMonths,
+          interest: extraLoanInterest,
           type: 'extra_loan',
           amount: extraLoan,
           newPrincipal: currentPrincipal,
-          description: `Extra loan given: ₹${extraLoan.toLocaleString()}`
+          description: `Extra loan: ₹${extraLoan.toLocaleString()} from ${paymentDate.toLocaleDateString()}`
         });
       }
       
-      // Process payment AFTER extra loan (this reduces the outstanding amount, not principal)
+      // Process payment
       const partialPayment = payment.partialPayment || payment.PartialPayment || 0;
       if (partialPayment > 0) {
         console.log(`Processing partial payment: ₹${partialPayment}`);
@@ -117,52 +113,20 @@ export const calculateLoanInterest = (loan) => {
           type: 'payment',
           amount: -partialPayment,
           newPrincipal: currentPrincipal, // Principal doesn't change with payments
-          description: `Partial payment received: ₹${partialPayment.toLocaleString()}`
+          description: `Payment received: ₹${partialPayment.toLocaleString()} on ${paymentDate.toLocaleDateString()}`
         });
       }
-      
-      lastDate = paymentDate;
     });
-    
-    // Calculate interest from last payment to today
-    if (currentPrincipal > 0 && today > lastDate) {
-      const monthsDiff = calculateMonthsDifference(lastDate, today);
-      const finalInterest = currentPrincipal * monthlyInterestRate * monthsDiff;
-      
-      console.log(`Final interest calculation from ${lastDate.toISOString()} to ${today.toISOString()}:`, {
-        monthsDiff,
-        finalInterest,
-        currentPrincipal
-      });
-      
-      if (finalInterest > 0) {
-        totalInterest += finalInterest;
-        
-        interestBreakdown.push({
-          fromDate: lastDate,
-          toDate: today,
-          principal: currentPrincipal,
-          months: monthsDiff,
-          interest: finalInterest,
-          type: 'current',
-          description: `Current interest for ${monthsDiff.toFixed(2)} months on ₹${currentPrincipal.toLocaleString()}`
-        });
-      }
-    }
   }
-  
-  // Calculate totals
-  const totalExtraLoans = calculateTotalExtraLoans(loan);
-  const totalPrincipal = originalLoanAmount + totalExtraLoans;
   
   const result = {
     totalInterest: Math.round(totalInterest * 100) / 100,
-    currentPrincipal: Math.max(0, currentPrincipal), // This now includes extra loans
+    currentPrincipal: Math.max(0, currentPrincipal), // Original + Extra loans
     interestBreakdown,
     totalAmount: Math.max(0, currentPrincipal) + totalInterest,
     originalLoanAmount,
     totalExtraLoans,
-    totalPrincipal
+    totalPrincipal: currentPrincipal // This should be originalLoanAmount + totalExtraLoans
   };
   
   console.log('Final result:', result);
