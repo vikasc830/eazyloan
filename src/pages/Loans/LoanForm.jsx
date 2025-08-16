@@ -175,8 +175,6 @@ const LoanForm = ({ loan, onSubmit, onCancel }) => {
           oneYearAgo.setFullYear(today.getFullYear() - 1);
           if (selectedDate > today) {
             newErrors.loanDate = 'Loan date cannot be in the future';
-          } else if (selectedDate < oneYearAgo) {
-            newErrors.loanDate = 'Loan date cannot be more than 1 year ago';
           } else {
             delete newErrors.loanDate;
           }

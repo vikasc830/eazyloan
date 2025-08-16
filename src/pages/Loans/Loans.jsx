@@ -153,6 +153,7 @@ const Loans = () => {
     try {
       // Use the dedicated payment endpoint
       const paymentPayload = {
+        Id:loanId,
         Date: paymentData.date,
         PartialPayment: paymentData.partialPayment || 0,
         ExtraLoan: paymentData.extraLoan || 0
