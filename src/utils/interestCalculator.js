@@ -67,7 +67,7 @@ export const calculateLoanInterest = (loan) => {
         currentPrincipal
       });
       
-      // Calculate interest for period before this payment
+      // Calculate interest for period before this payment/extra loan
       if (currentPrincipal > 0 && paymentDate > lastDate) {
         const monthsDiff = calculateMonthsDifference(lastDate, paymentDate);
         const periodInterest = currentPrincipal * monthlyInterestRate * monthsDiff;
@@ -93,20 +93,7 @@ export const calculateLoanInterest = (loan) => {
         }
       }
       
-      // Process payment
-      const partialPayment = payment.partialPayment || payment.PartialPayment || 0;
-      if (partialPayment > 0) {
-        console.log(`Processing partial payment: ₹${partialPayment}`);
-        interestBreakdown.push({
-          date: paymentDate,
-          type: 'payment',
-          amount: -partialPayment,
-          newPrincipal: currentPrincipal,
-          description: `Partial payment received: ₹${partialPayment.toLocaleString()}`
-        });
-      }
-      
-      // Process extra loan
+      // Process extra loan FIRST (this increases the principal)
       const extraLoan = payment.extraLoan || payment.ExtraLoan || 0;
       if (extraLoan > 0) {
         console.log(`Processing extra loan: ₹${extraLoan}, old principal: ${currentPrincipal}`);
@@ -118,6 +105,19 @@ export const calculateLoanInterest = (loan) => {
           amount: extraLoan,
           newPrincipal: currentPrincipal,
           description: `Extra loan given: ₹${extraLoan.toLocaleString()}`
+        });
+      }
+      
+      // Process payment AFTER extra loan (this reduces the outstanding amount, not principal)
+      const partialPayment = payment.partialPayment || payment.PartialPayment || 0;
+      if (partialPayment > 0) {
+        console.log(`Processing partial payment: ₹${partialPayment}`);
+        interestBreakdown.push({
+          date: paymentDate,
+          type: 'payment',
+          amount: -partialPayment,
+          newPrincipal: currentPrincipal, // Principal doesn't change with payments
+          description: `Partial payment received: ₹${partialPayment.toLocaleString()}`
         });
       }
       
@@ -157,7 +157,7 @@ export const calculateLoanInterest = (loan) => {
   
   const result = {
     totalInterest: Math.round(totalInterest * 100) / 100,
-    currentPrincipal: Math.max(0, currentPrincipal),
+    currentPrincipal: Math.max(0, currentPrincipal), // This now includes extra loans
     interestBreakdown,
     totalAmount: Math.max(0, currentPrincipal) + totalInterest,
     originalLoanAmount,
@@ -176,38 +176,21 @@ export const calculateLoanInterest = (loan) => {
  * @returns {number} - Difference in months (decimal)
  */
 const calculateMonthsDifference = (startDate, endDate) => {
-  // Calculate months difference more accurately
-  const yearDiff = endDate.getFullYear() - startDate.getFullYear();
-  const monthDiff = endDate.getMonth() - startDate.getMonth();
-  const dayDiff = endDate.getDate() - startDate.getDate();
+  // Calculate total days difference
+  const timeDiff = endDate.getTime() - startDate.getTime();
+  const daysDiff = timeDiff / (1000 * 60 * 60 * 24);
   
-  // Total months difference
-  let totalMonths = yearDiff * 12 + monthDiff;
-  
-  // Add fractional month based on days
-  if (dayDiff > 0) {
-    const daysInMonth = new Date(endDate.getFullYear(), endDate.getMonth() + 1, 0).getDate();
-    totalMonths += dayDiff / daysInMonth;
-  } else if (dayDiff < 0) {
-    totalMonths -= 1;
-    const daysInPrevMonth = new Date(endDate.getFullYear(), endDate.getMonth(), 0).getDate();
-    totalMonths += (daysInPrevMonth + dayDiff) / daysInPrevMonth;
-  }
-  
-  // For very new loans (less than a day), consider minimum of 1 day
-  if (totalMonths < 0.001) {
-    const timeDiff = endDate.getTime() - startDate.getTime();
-    const daysDiff = timeDiff / (1000 * 60 * 60 * 24);
-    totalMonths = Math.max(daysDiff / 30, 0.001); // Minimum calculation
-  }
+  // Convert days to months (using 30 days per month for consistency)
+  const monthsDiff = daysDiff / 30;
   
   console.log('Date calculation:', {
     startDate: startDate.toISOString(),
     endDate: endDate.toISOString(),
-    totalMonths: totalMonths.toFixed(4)
+    daysDiff: daysDiff.toFixed(2),
+    monthsDiff: monthsDiff.toFixed(4)
   });
   
-  return Math.max(0, totalMonths);
+  return Math.max(0, monthsDiff);
 };
 
 /**
