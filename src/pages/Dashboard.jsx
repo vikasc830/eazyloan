@@ -289,14 +289,23 @@ const Dashboard = () => {
   const totalLoans = loans.length;
   const activeLoans = loans.filter(loan => getLoanStatus(loan) === 'Active').length;
   const overdueLoans = loans.filter(loan => getLoanStatus(loan) === 'Overdue').length;
+  
+  // Calculate correct totals using interest calculator
   const totalPrincipal = loans.reduce((sum, loan) => {
     const interestData = calculateLoanInterest(loan);
     return sum + interestData.currentPrincipal;
   }, 0);
+  
   const totalInterest = loans.reduce((sum, loan) => {
     const interestData = calculateLoanInterest(loan);
     return sum + interestData.totalInterest;
   }, 0);
+  
+  const totalAmount = loans.reduce((sum, loan) => {
+    const interestData = calculateLoanInterest(loan);
+    return sum + interestData.totalAmount;
+  }, 0);
+  
   const totalOutstanding = loans.reduce((sum, loan) => {
     return sum + getCurrentBalance(loan);
   }, 0);
@@ -335,7 +344,7 @@ const Dashboard = () => {
     },
     { 
       title: "Total Principal", 
-      value: `₹${(totalPrincipal / 100000).toFixed(1)}L`, 
+      value: `₹${totalPrincipal >= 100000 ? (totalPrincipal / 100000).toFixed(1) + 'L' : totalPrincipal.toLocaleString()}`, 
       icon: FaCoins,
       color: COLORS.info,
       trend: 8.7,
@@ -343,7 +352,7 @@ const Dashboard = () => {
     },
     { 
       title: "Interest Earned", 
-      value: `₹${(totalInterest / 100000).toFixed(1)}L`, 
+      value: `₹${totalInterest >= 100000 ? (totalInterest / 100000).toFixed(1) + 'L' : totalInterest.toLocaleString()}`, 
       icon: FaArrowUp, 
       color: COLORS.warning,
       trend: 12.3,
@@ -351,7 +360,7 @@ const Dashboard = () => {
     },
     { 
       title: "Outstanding", 
-      value: `₹${(totalOutstanding / 100000).toFixed(1)}L`, 
+      value: `₹${totalOutstanding >= 100000 ? (totalOutstanding / 100000).toFixed(1) + 'L' : totalOutstanding.toLocaleString()}`, 
       icon: FaMoneyBillWave, 
       color: COLORS.secondary,
       trend: -3.4,

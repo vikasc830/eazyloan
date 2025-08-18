@@ -61,10 +61,12 @@ const Loans = () => {
     const dueDate = new Date(loan.dueDate);
     return dueDate < today && loan.status !== "closed";
   }).length;
-  const totalAmount = loans.reduce(
-    (sum, loan) => sum + parseFloat(loan.loanAmount || 0),
-    0
-  );
+  
+  // Calculate correct total amount using interest calculator
+  const totalAmount = loans.reduce((sum, loan) => {
+    const interestData = calculateLoanInterest(loan);
+    return sum + interestData.totalAmount;
+  }, 0);
 
   const filteredLoans = loans.filter((loan) => {
 
@@ -271,7 +273,7 @@ const Loans = () => {
             </div>
             <div className="summary-card">
               <div className="summary-value">
-                ₹{totalAmount.toLocaleString()}
+                ₹{totalAmount >= 100000 ? (totalAmount / 100000).toFixed(1) + 'L' : totalAmount.toLocaleString()}
               </div>
               <div className="summary-label">Total Amount</div>
             </div>
