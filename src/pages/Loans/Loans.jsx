@@ -272,7 +272,7 @@ const totalAmount = loans.reduce((sum, loan) => {
             </div>
             <div className="summary-card">
               <div className="summary-value">
-                ₹{totalAmount.toLocaleString()}
+                ₹{totalAmount >= 100000 ? (totalAmount / 100000).toFixed(1) + 'L' : totalAmount.toLocaleString()}
               </div>
               <div className="summary-label">Total Amount</div>
             </div>

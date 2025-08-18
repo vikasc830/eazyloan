@@ -1,7 +1,7 @@
 /**
  * Interest Calculator Utility
  * Calculates interest based on principal amount and time duration
- * Interest = Principal × Rate × Time (in months)
+ * Interest = Principal × Rate × Time (in days/months)
  */
 
 /**
@@ -92,6 +92,30 @@ export const calculateLoanInterest = (loan) => {
       type: 'interest_period',
       description: `Interest on ₹${currentPrincipal.toLocaleString()} from ${lastDate.toLocaleDateString()} to ${today.toLocaleDateString()}`
     });
+    
+    lastDate = eventDate;
+  });
+  
+  // Calculate interest from last event date to today
+  if (runningPrincipal > 0 && today > lastDate) {
+    const days = calculateDaysDifference(lastDate, today);
+    const months = days / 30;
+    const finalPeriodInterest = runningPrincipal * monthlyInterestRate * months;
+    
+    totalInterest += finalPeriodInterest;
+    
+    interestBreakdown.push({
+      fromDate: lastDate,
+      toDate: today,
+      principal: runningPrincipal,
+      days: days,
+      months: months,
+      interest: finalPeriodInterest,
+      type: 'current',
+      description: `Current interest on ₹${runningPrincipal.toLocaleString()} for ${days} days (${months.toFixed(2)} months)`
+    });
+    
+    console.log(`Final period: ₹${runningPrincipal} for ${days} days = ₹${finalPeriodInterest.toFixed(2)} interest`);
   }
 
   const result = {
@@ -105,6 +129,25 @@ export const calculateLoanInterest = (loan) => {
   };
 
   return result;
+};
+
+/**
+ * Calculate difference in days between two dates
+ * @param {Date} startDate - Start date
+ * @param {Date} endDate - End date
+ * @returns {number} - Difference in days
+ */
+const calculateDaysDifference = (startDate, endDate) => {
+  const timeDiff = endDate.getTime() - startDate.getTime();
+  const daysDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+  
+  console.log('Date calculation:', {
+    startDate: startDate.toISOString().split('T')[0],
+    endDate: endDate.toISOString().split('T')[0],
+    daysDiff: daysDiff
+  });
+  
+  return Math.max(0, daysDiff);
 };
 
 /**
@@ -130,7 +173,7 @@ export const calculateTotalPaid = (loan) => {
   if (payments.length === 0) return 0;
   return payments.reduce((total, payment) => {
     const partialPayment = payment.partialPayment || payment.PartialPayment || 0;
-    return total + partialPayment;
+    return total + parseFloat(partialPayment);
   }, 0);
 };
 
@@ -144,7 +187,7 @@ export const calculateTotalExtraLoans = (loan) => {
   if (payments.length === 0) return 0;
   return payments.reduce((total, payment) => {
     const extraLoan = payment.extraLoan || payment.ExtraLoan || 0;
-    return total + extraLoan;
+    return total + parseFloat(extraLoan);
   }, 0);
 };
 
