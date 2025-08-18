@@ -54,17 +54,18 @@ const Loans = () => {
     fetchLoans();
   }, []);
 
-  const totalLoans = loans.length;
-  const activeLoans = loans.filter((loan) => loan.status === "Active").length;
-  const overdueLoans = loans.filter((loan) => {
-    const today = new Date();
-    const dueDate = new Date(loan.dueDate);
-    return dueDate < today && loan.status !== "closed";
-  }).length;
-  const totalAmount = loans.reduce(
-    (sum, loan) => sum + parseFloat(loan.loanAmount || 0),
-    0
-  );
+ const totalLoans = loans.length;
+const activeLoans = loans.filter((loan) => loan.status === "Active").length;
+const overdueLoans = loans.filter((loan) => {
+  const today = new Date();
+  const dueDate = new Date(loan.dueDate);
+  return dueDate < today && loan.status !== "closed";
+}).length;
+
+// ✅ Use current balance instead of just principal
+const totalAmount = loans.reduce((sum, loan) => {
+  return sum + getCurrentBalance(loan);
+}, 0);
 
   const filteredLoans = loans.filter((loan) => {
 

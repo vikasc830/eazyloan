@@ -210,13 +210,10 @@ const LoanDetails = ({ loan, onClose }) => {
                 <h3>Financial Summary</h3>
               </div>
               <div className="card-content">
-                <div className="financial-row">
-                  <span className="financial-label">Original Principal</span>
-                  <span className="financial-value">₹{interestData.originalLoanAmount.toLocaleString()}</span>
-                </div>
+                
                 <div className="financial-row">
                   <span className="financial-label">Total Principal (Original + Extra)</span>
-                  <span className="financial-value">₹{(interestData.originalLoanAmount + interestData.totalExtraLoans).toLocaleString()}</span>
+                  <span className="financial-value">₹{(interestData.originalLoanAmount).toLocaleString()}</span>
                 </div>
                 <div className="financial-row">
                   <span className="financial-label">Interest Accrued</span>
@@ -230,13 +227,9 @@ const LoanDetails = ({ loan, onClose }) => {
                   <span className="financial-label">Total Payments Received</span>
                   <span className="financial-value received">₹{totalPaid.toLocaleString()}</span>
                 </div>
-                <div className="financial-row">
-                  <span className="financial-label">Current Balance</span>
-                  <span className="financial-value">₹{currentBalance.toLocaleString()}</span>
-                </div>
                 <div className="financial-row total">
                   <span className="financial-label">Total Amount</span>
-                  <span className="financial-value">₹{interestData.totalAmount.toLocaleString()}</span>
+                  <span className="financial-value">₹{currentBalance.toLocaleString()}</span>
                 </div>
               </div>
             </div>
