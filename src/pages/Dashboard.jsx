@@ -177,10 +177,10 @@ const Dashboard = () => {
       }
       
       const monthData = monthlyMap.get(monthKey);
-      monthData.totalPrincipal += interestData.currentPrincipal;
+      monthData.totalPrincipal += interestData.totalPrincipalGiven;
       monthData.totalInterest += interestData.totalInterest;
-      monthData.totalAmount += interestData.totalAmount;
-      monthData.currentBalance += currentBalance;
+      monthData.totalAmount += interestData.currentOutstanding;
+      monthData.currentBalance += interestData.currentOutstanding;
       monthData.loanCount += 1;
       monthData.newLoans += 1;
       
@@ -196,6 +196,7 @@ const Dashboard = () => {
       const ornamentData = ornamentMap.get(ornamentType);
       ornamentData.count += 1;
       ornamentData.value += interestData.currentPrincipal;
+      ornamentData.value += interestData.totalPrincipalGiven;
       
       // Performance data
       const today = new Date();
@@ -212,9 +213,9 @@ const Dashboard = () => {
         }
         const perfData = performanceMap.get(monthKey);
         perfData.revenue += interestData.totalInterest;
-        perfData.newBusiness += interestData.currentPrincipal;
+        perfData.newBusiness += interestData.totalPrincipalGiven;
         if (loan.payments && loan.payments.length > 0) {
-          perfData.collections += loan.payments.reduce((sum, p) => sum + (p.partialPayment || 0), 0);
+          perfData.collections += interestData.totalPayments;
         }
       }
     });
@@ -293,7 +294,7 @@ const Dashboard = () => {
   // Calculate correct totals using interest calculator
   const totalPrincipal = loans.reduce((sum, loan) => {
     const interestData = calculateLoanInterest(loan);
-    return sum + interestData.currentPrincipal;
+    return sum + interestData.totalPrincipalGiven;
   }, 0);
   
   const totalInterest = loans.reduce((sum, loan) => {
@@ -303,13 +304,9 @@ const Dashboard = () => {
   
   const totalAmount = loans.reduce((sum, loan) => {
     const interestData = calculateLoanInterest(loan);
-    return sum + interestData.totalAmount;
+    return sum + interestData.currentOutstanding;
   }, 0);
   
-  const totalOutstanding = loans.reduce((sum, loan) => {
-    return sum + getCurrentBalance(loan);
-  }, 0);
-
   // Calculate growth metrics
   const currentMonth = new Date().getMonth();
   const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
@@ -360,7 +357,7 @@ const Dashboard = () => {
     },
     { 
       title: "Outstanding", 
-      value: `₹${totalOutstanding >= 100000 ? (totalOutstanding / 100000).toFixed(1) + 'L' : totalOutstanding.toLocaleString()}`, 
+      value: `₹${totalAmount >= 100000 ? (totalAmount / 100000).toFixed(1) + 'L' : totalAmount.toLocaleString()}`, 
       icon: FaMoneyBillWave, 
       color: COLORS.secondary,
       trend: -3.4,

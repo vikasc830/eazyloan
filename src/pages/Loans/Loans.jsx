@@ -339,13 +339,13 @@ const totalAmount = loans.reduce((sum, loan) => {
                           </small>
                         </td>
                         <td className="amount">
-                          ₹{interestData.currentPrincipal.toLocaleString()}
+                          ₹{interestData.totalPrincipalGiven.toLocaleString()}
                         </td>
                         <td className="amount interest-amount">
                           ₹{interestData.totalInterest.toLocaleString()}
                         </td>
                         <td className="amount total-amount">
-                          ₹{interestData.totalAmount.toLocaleString()}
+                          ₹{interestData.currentOutstanding.toLocaleString()}
                         </td>
                         <td>
                           {new Date(loan.loanDate).toLocaleDateString()}

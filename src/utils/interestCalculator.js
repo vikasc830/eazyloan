@@ -23,8 +23,9 @@ export const calculateLoanInterest = (loan) => {
 
   let totalInterest = 0;
   const interestBreakdown = [];
-  let runningPrincipal = originalLoanAmount;
+  let runningPrincipal = originalLoanAmount; // This is the principal that earns interest
   let totalExtraLoans = 0;
+  let totalPayments = 0;
   let lastDate = loanDate;
 
   console.log(`Starting calculation for loan: ${loan.id}`);
@@ -75,7 +76,6 @@ export const calculateLoanInterest = (loan) => {
   for (let i = 0; i < events.length; i++) {
     const currentEvent = events[i];
     const nextEvent = events[i + 1];
-    const periodEndDate = nextEvent ? nextEvent.date : today;
 
     // Calculate interest for the period from lastDate to current event date
     if (lastDate < currentEvent.date && runningPrincipal > 0) {
@@ -115,17 +115,19 @@ export const calculateLoanInterest = (loan) => {
       
       console.log(`Extra loan: ₹${currentEvent.amount}, New principal: ₹${runningPrincipal}`);
     } else if (currentEvent.type === 'payment') {
-      // Payments don't affect the principal for interest calculation
-      // They only affect the outstanding balance
+      // Payments reduce the principal that earns interest going forward
+      runningPrincipal = Math.max(0, runningPrincipal - currentEvent.amount);
+      totalPayments += currentEvent.amount;
+      
       interestBreakdown.push({
         date: currentEvent.date,
         type: 'payment',
         amount: -currentEvent.amount,
-        newPrincipal: runningPrincipal, // Principal stays same for interest calculation
+        newPrincipal: runningPrincipal,
         description: currentEvent.description
       });
       
-      console.log(`Payment: ₹${currentEvent.amount}, Principal remains: ₹${runningPrincipal}`);
+      console.log(`Payment: ₹${currentEvent.amount}, New principal: ₹${runningPrincipal}`);
     }
 
     lastDate = currentEvent.date;
@@ -153,18 +155,21 @@ export const calculateLoanInterest = (loan) => {
     console.log(`Final period: ₹${runningPrincipal} for ${days} days = ₹${finalPeriodInterest.toFixed(2)} interest`);
   }
 
-  // Calculate current principal after payments (for outstanding balance)
-  const totalPaid = calculateTotalPaid(loan);
-  const currentPrincipalAfterPayments = Math.max(0, (originalLoanAmount + totalExtraLoans) - totalPaid);
+  // Calculate totals correctly
+  const totalPrincipalGiven = originalLoanAmount + totalExtraLoans; // Total money given to customer
+  const totalAmountDue = totalPrincipalGiven + totalInterest; // Total amount customer owes
+  const currentOutstanding = totalAmountDue - totalPayments; // What customer still owes
 
   const result = {
     totalInterest: Math.round(totalInterest * 100) / 100,
-    currentPrincipal: currentPrincipalAfterPayments, // after payments
+    currentPrincipal: runningPrincipal, // Principal that's currently earning interest
+    totalPrincipalGiven: totalPrincipalGiven, // Total money given to customer
+    currentOutstanding: Math.max(0, currentOutstanding), // Current outstanding balance
     interestBreakdown,
     originalLoanAmount,
     totalExtraLoans,
-    totalPrincipal: originalLoanAmount + totalExtraLoans, // always original + extra
-    totalAmount: (originalLoanAmount + totalExtraLoans) + totalInterest // before payments
+    totalPayments,
+    totalAmount: Math.round(totalAmountDue * 100) / 100 // Total amount due (before payments)
   };
 
   console.log(`Final calculation:`, result);
@@ -232,18 +237,13 @@ export const calculateTotalExtraLoans = (loan) => {
 };
 
 /**
- * Get current outstanding balance (Total Principal + Interest - Total Paid)
+ * Get current outstanding balance (what customer still owes)
  * @param {Object} loan - The loan object
  * @returns {number} - Outstanding balance
  */
 export const getCurrentBalance = (loan) => {
   const interestData = calculateLoanInterest(loan);
-  const totalPaid = calculateTotalPaid(loan);
-
-  // Correct: Original + Extra + Interest – Paid
-  const outstandingBalance = (interestData.originalLoanAmount + interestData.totalExtraLoans + interestData.totalInterest) - totalPaid;
-
-  return Math.max(0, outstandingBalance);
+  return interestData.currentOutstanding;
 };
 
 /**

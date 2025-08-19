@@ -42,9 +42,9 @@ const PaymentModal = ({ loan, onClose, onSubmit }) => {
       return;
     }
     
-    if (paymentAmount > currentBalance && paymentAmount > 0) {
+    if (paymentAmount > interestData.currentOutstanding && paymentAmount > 0) {
       const confirmOverpayment = window.confirm(
-        `Payment amount (₹${paymentAmount.toLocaleString()}) exceeds current balance (₹${currentBalance.toLocaleString()}). Do you want to continue?`
+        `Payment amount (₹${paymentAmount.toLocaleString()}) exceeds current balance (₹${interestData.currentOutstanding.toLocaleString()}). Do you want to continue?`
       );
       if (!confirmOverpayment) return;
     }
@@ -70,7 +70,7 @@ const PaymentModal = ({ loan, onClose, onSubmit }) => {
           <div className="loan-summary">
             <div className="summary-item">
               <span className="label">Current Loan Amount:</span>
-              <span className="value">₹{interestData.currentPrincipal.toLocaleString()}</span>
+              <span className="value">₹{interestData.totalPrincipalGiven.toLocaleString()}</span>
             </div>
             <div className="summary-item">
               <span className="label">Accrued Interest:</span>
@@ -78,7 +78,7 @@ const PaymentModal = ({ loan, onClose, onSubmit }) => {
             </div>
             <div className="summary-item">
               <span className="label">Current Balance:</span>
-              <span className="value">₹{currentBalance.toLocaleString()}</span>
+              <span className="value">₹{interestData.currentOutstanding.toLocaleString()}</span>
             </div>
             <div className="summary-item">
               <span className="label">Interest Rate:</span>

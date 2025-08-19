@@ -213,23 +213,19 @@ const LoanDetails = ({ loan, onClose }) => {
                 
                 <div className="financial-row">
                   <span className="financial-label">Total Principal (Original + Extra)</span>
-                  <span className="financial-value">₹{(interestData.originalLoanAmount).toLocaleString()}</span>
+                  <span className="financial-value">₹{interestData.totalPrincipalGiven.toLocaleString()}</span>
                 </div>
                 <div className="financial-row">
                   <span className="financial-label">Interest Accrued</span>
                   <span className="financial-value interest">₹{interestData.totalInterest.toLocaleString()}</span>
                 </div>
                 <div className="financial-row">
-                  <span className="financial-label">Extra Loans Given</span>
-                  <span className="financial-value">₹{interestData.totalExtraLoans.toLocaleString()}</span>
-                </div>
-                <div className="financial-row">
                   <span className="financial-label">Total Payments Received</span>
-                  <span className="financial-value received">₹{totalPaid.toLocaleString()}</span>
+                  <span className="financial-value received">₹{interestData.totalPayments.toLocaleString()}</span>
                 </div>
                 <div className="financial-row total">
-                  <span className="financial-label">Total Amount</span>
-                  <span className="financial-value">₹{currentBalance.toLocaleString()}</span>
+                  <span className="financial-label">Outstanding Balance</span>
+                  <span className="financial-value">₹{interestData.currentOutstanding.toLocaleString()}</span>
                 </div>
               </div>
             </div>
