@@ -31,40 +31,29 @@ export const calculateLoanInterest = (loan) => {
   console.log(`Starting calculation for loan: ${loan.id}`);
   console.log(`Original amount: ₹${originalLoanAmount}, Rate: ${loan.interestRate}%`);
 
+  // Calculate total extra loans and payments first
+  sortedPayments.forEach((payment) => {
+    const extraLoan = parseFloat(payment.extraLoan || payment.ExtraLoan || 0);
+    const partialPayment = parseFloat(payment.partialPayment || payment.PartialPayment || 0);
+    
+    totalExtraLoans += extraLoan;
+    totalPayments += partialPayment;
+  });
+
   // Create timeline of all events
   const events = [];
   
-  // Add loan start event
-  events.push({
-    date: loanDate,
-    type: 'loan_start',
-    amount: originalLoanAmount,
-    description: 'Loan started'
-  });
-
   // Add payment events
   sortedPayments.forEach((payment) => {
     const paymentDate = new Date(payment.date || payment.Date);
-    
-    // Add extra loan event if exists
     const extraLoan = parseFloat(payment.extraLoan || payment.ExtraLoan || 0);
-    if (extraLoan > 0) {
-      events.push({
-        date: paymentDate,
-        type: 'extra_loan',
-        amount: extraLoan,
-        description: `Extra loan given: ₹${extraLoan.toLocaleString()}`
-      });
-    }
-    
-    // Add payment event if exists
     const partialPayment = parseFloat(payment.partialPayment || payment.PartialPayment || 0);
-    if (partialPayment > 0) {
+    
+    if (extraLoan > 0 || partialPayment > 0) {
       events.push({
         date: paymentDate,
-        type: 'payment',
-        amount: partialPayment,
-        description: `Payment received: ₹${partialPayment.toLocaleString()}`
+        extraLoan: extraLoan,
+        partialPayment: partialPayment
       });
     }
   });
@@ -75,7 +64,6 @@ export const calculateLoanInterest = (loan) => {
   // Process each period between events
   for (let i = 0; i < events.length; i++) {
     const currentEvent = events[i];
-    const nextEvent = events[i + 1];
 
     // Calculate interest for the period from lastDate to current event date
     if (lastDate < currentEvent.date && runningPrincipal > 0) {
@@ -100,34 +88,34 @@ export const calculateLoanInterest = (loan) => {
       console.log(`Principal: ₹${runningPrincipal}, Days: ${days}, Interest: ₹${periodInterest.toFixed(2)}`);
     }
 
-    // Apply the current event
-    if (currentEvent.type === 'extra_loan') {
-      runningPrincipal += currentEvent.amount;
-      totalExtraLoans += currentEvent.amount;
-      
+    // Apply extra loan first (increases principal for interest calculation)
+    if (currentEvent.extraLoan > 0) {
+      runningPrincipal += currentEvent.extraLoan;
       interestBreakdown.push({
         date: currentEvent.date,
         type: 'extra_loan',
-        amount: currentEvent.amount,
+        amount: currentEvent.extraLoan,
         newPrincipal: runningPrincipal,
-        description: currentEvent.description
+        description: `Extra loan given: ₹${currentEvent.extraLoan.toLocaleString()}`
       });
       
-      console.log(`Extra loan: ₹${currentEvent.amount}, New principal: ₹${runningPrincipal}`);
-    } else if (currentEvent.type === 'payment') {
+      console.log(`Extra loan: ₹${currentEvent.extraLoan}, New principal: ₹${runningPrincipal}`);
+    }
+    
+    // Apply payment (reduces principal for interest calculation)
+    if (currentEvent.partialPayment > 0) {
       // Payments reduce the principal that earns interest going forward
-      runningPrincipal = Math.max(0, runningPrincipal - currentEvent.amount);
-      totalPayments += currentEvent.amount;
+      runningPrincipal = Math.max(0, runningPrincipal - currentEvent.partialPayment);
       
       interestBreakdown.push({
         date: currentEvent.date,
         type: 'payment',
-        amount: -currentEvent.amount,
+        amount: -currentEvent.partialPayment,
         newPrincipal: runningPrincipal,
-        description: currentEvent.description
+        description: `Payment received: ₹${currentEvent.partialPayment.toLocaleString()}`
       });
       
-      console.log(`Payment: ₹${currentEvent.amount}, New principal: ₹${runningPrincipal}`);
+      console.log(`Payment: ₹${currentEvent.partialPayment}, New principal: ₹${runningPrincipal}`);
     }
 
     lastDate = currentEvent.date;
