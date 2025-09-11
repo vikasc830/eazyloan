@@ -24,21 +24,21 @@ export const calculateLoanInterest = (loan) => {
   let totalInterest = 0;
   const interestBreakdown = [];
   let runningPrincipal = originalLoanAmount; // This is the principal that earns interest
-  let totalExtraLoans = 0;
-  let totalPayments = 0;
   let lastDate = loanDate;
 
   console.log(`Starting calculation for loan: ${loan.id}`);
   console.log(`Original amount: ₹${originalLoanAmount}, Rate: ${loan.interestRate}%`);
 
-  // Calculate total extra loans and payments first
-  sortedPayments.forEach((payment) => {
-    const extraLoan = parseFloat(payment.extraLoan || payment.ExtraLoan || 0);
-    const partialPayment = parseFloat(payment.partialPayment || payment.PartialPayment || 0);
-    
-    totalExtraLoans += extraLoan;
-    totalPayments += partialPayment;
-  });
+  // Calculate totals separately (don't modify these in the loop)
+  const totalExtraLoans = sortedPayments.reduce((sum, payment) => {
+    return sum + parseFloat(payment.extraLoan || payment.ExtraLoan || 0);
+  }, 0);
+  
+  const totalPayments = sortedPayments.reduce((sum, payment) => {
+    return sum + parseFloat(payment.partialPayment || payment.PartialPayment || 0);
+  }, 0);
+
+  console.log(`Total extra loans: ₹${totalExtraLoans}, Total payments: ₹${totalPayments}`);
 
   // Create timeline of all events
   const events = [];
@@ -143,7 +143,7 @@ export const calculateLoanInterest = (loan) => {
     console.log(`Final period: ₹${runningPrincipal} for ${days} days = ₹${finalPeriodInterest.toFixed(2)} interest`);
   }
 
-  // Calculate totals correctly
+  // Calculate totals correctly - using the pre-calculated totals
   const totalPrincipalGiven = originalLoanAmount + totalExtraLoans; // Total money given to customer
   const totalAmountDue = totalPrincipalGiven + totalInterest; // Total amount customer owes
   const currentOutstanding = totalAmountDue - totalPayments; // What customer still owes
@@ -161,6 +161,7 @@ export const calculateLoanInterest = (loan) => {
   };
 
   console.log(`Final calculation:`, result);
+  console.log(`Breakdown: Original: ₹${originalLoanAmount}, Extra: ₹${totalExtraLoans}, Total Given: ₹${totalPrincipalGiven}`);
   return result;
 };
 
