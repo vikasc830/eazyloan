@@ -9,6 +9,7 @@ import {
 } from "../../utils/interestCalculator";
 import './LoanDetails.css';
 
+
 const LoanDetails = ({ loan, onClose }) => {
   if (!loan) return null;
 
@@ -41,6 +42,8 @@ const LoanDetails = ({ loan, onClose }) => {
             </button>
           </div>
         </div>
+
+
 
         <div className="loan-details-content">
           {/* Status and Quick Stats */}

@@ -10,6 +10,8 @@ import {
 import LoanForm from "./LoanForm";
 import LoanDetails from "./LoanDetails";
 import PaymentModal from "./PaymentModal";
+import CloseLoanModal from "./CloseLoanModal";
+import { FaLock } from "react-icons/fa";
 import {
   calculateLoanInterest,
   calculateTotalPaid,
@@ -29,6 +31,34 @@ const Loans = () => {
   const [editingLoan, setEditingLoan] = useState(null);
   const [selectedLoan, setSelectedLoan] = useState(null);
   const [paymentLoan, setPaymentLoan] = useState(null);
+  const [showCloseLoanModal, setShowCloseLoanModal] = useState(false);
+  const [closingLoan, setClosingLoan] = useState(null);
+  // Handler to open close loan modal
+  const handleCloseLoan = (loan) => {
+    setClosingLoan(loan);
+    setShowCloseLoanModal(true);
+  };
+
+  // Handler to submit close loan data
+  const handleCloseLoanSubmit = async (closureData) => {
+    // Call your backend API to save closureData to closure DB
+    // Example endpoint: /api/LoanClosure
+    try {
+      const response = await fetch("https://localhost:7133/api/LoanClosure", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(closureData),
+      });
+      if (!response.ok) throw new Error("Failed to close loan");
+      // Optionally update loan status to closed in main DB
+      await fetchLoans();
+      alert("Loan closed and saved to closure database.");
+    } catch (err) {
+      alert("Failed to close loan: " + err.message);
+    }
+    setShowCloseLoanModal(false);
+    setClosingLoan(null);
+  };
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [filterStatus, setFilterStatus] = useState("all");
@@ -387,8 +417,24 @@ const totalAmount = loans.reduce((sum, loan) => {
                             >
                               <FaTrash />
                             </button>
+                            <button
+                              className="btn-action btn-close-loan"
+                              onClick={() => handleCloseLoan(loan)}
+                              title="Close Loan"
+                              style={{ background: '#f1f5f9', color: '#2563eb', display: 'flex', alignItems: 'center', gap: 6, border: '1px solid #cbd5e1' }}
+                            >
+                              <FaLock style={{ fontSize: '1.1em', verticalAlign: 'middle' }} />
+                            </button>
                           </div>
                         </td>
+      {/* Close Loan Modal */}
+      {showCloseLoanModal && closingLoan && (
+        <CloseLoanModal
+          loan={closingLoan}
+          onClose={() => { setShowCloseLoanModal(false); setClosingLoan(null); }}
+          onSubmit={handleCloseLoanSubmit}
+        />
+      )}
                       </tr>
                     );
                   })
@@ -465,6 +511,7 @@ const totalAmount = loans.reduce((sum, loan) => {
             setShowDetails(false);
             setSelectedLoan(null);
           }}
+          onCloseLoan={handleCloseLoan}
         />
       )}
 

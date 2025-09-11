@@ -259,7 +259,7 @@ const LoanForm = ({ loan, onSubmit, onCancel }) => {
       EstimatedValue: estimatedValue,
       GoldRate: goldRate,
       SilverRate: silverRate,
-      Payments: loan ? loan.payments || [] : [] // Preserve existing payments when editing
+      payments: loan ? loan.payments || loan.Payments || [] : [] // Always use 'payments' in UI
     };
 
     // Log payload for debugging

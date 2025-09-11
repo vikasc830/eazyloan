@@ -16,7 +16,7 @@ export const calculateLoanInterest = (loan) => {
   const originalLoanAmount = parseFloat(loan.loanAmount);
 
   // Sort payments by date
-  const payments = loan.payments || loan.Payments || [];
+  const payments = loan.payments || [];
   const sortedPayments = payments.sort(
     (a, b) => new Date(a.date || a.Date) - new Date(b.date || b.Date)
   );
@@ -30,10 +30,11 @@ export const calculateLoanInterest = (loan) => {
   console.log(`Original amount: ₹${originalLoanAmount}, Rate: ${loan.interestRate}%`);
 
   // Calculate totals separately (don't modify these in the loop)
+  // Only sum extra loans that are not part of the original loan
   const totalExtraLoans = sortedPayments.reduce((sum, payment) => {
     return sum + parseFloat(payment.extraLoan || payment.ExtraLoan || 0);
   }, 0);
-  
+
   const totalPayments = sortedPayments.reduce((sum, payment) => {
     return sum + parseFloat(payment.partialPayment || payment.PartialPayment || 0);
   }, 0);
@@ -61,7 +62,8 @@ export const calculateLoanInterest = (loan) => {
   // Sort events by date
   events.sort((a, b) => a.date - b.date);
 
-  // Process each period between events
+  // Track extra loans already added to avoid double-counting
+  let extraLoanTotalAdded = 0;
   for (let i = 0; i < events.length; i++) {
     const currentEvent = events[i];
 
@@ -70,9 +72,9 @@ export const calculateLoanInterest = (loan) => {
       const days = calculateDaysDifference(lastDate, currentEvent.date);
       const months = days / 30; // Convert days to months for interest calculation
       const periodInterest = runningPrincipal * monthlyInterestRate * months;
-      
+
       totalInterest += periodInterest;
-      
+
       interestBreakdown.push({
         fromDate: lastDate,
         toDate: currentEvent.date,
@@ -90,23 +92,26 @@ export const calculateLoanInterest = (loan) => {
 
     // Apply extra loan first (increases principal for interest calculation)
     if (currentEvent.extraLoan > 0) {
-      runningPrincipal += currentEvent.extraLoan;
-      interestBreakdown.push({
-        date: currentEvent.date,
-        type: 'extra_loan',
-        amount: currentEvent.extraLoan,
-        newPrincipal: runningPrincipal,
-        description: `Extra loan given: ₹${currentEvent.extraLoan.toLocaleString()}`
-      });
-      
-      console.log(`Extra loan: ₹${currentEvent.extraLoan}, New principal: ₹${runningPrincipal}`);
+      // Only add extra loan if not already added
+      if (extraLoanTotalAdded + currentEvent.extraLoan <= totalExtraLoans) {
+        runningPrincipal += currentEvent.extraLoan;
+        extraLoanTotalAdded += currentEvent.extraLoan;
+        interestBreakdown.push({
+          date: currentEvent.date,
+          type: 'extra_loan',
+          amount: currentEvent.extraLoan,
+          newPrincipal: runningPrincipal,
+          description: `Extra loan given: ₹${currentEvent.extraLoan.toLocaleString()}`
+        });
+        console.log(`Extra loan: ₹${currentEvent.extraLoan}, New principal: ₹${runningPrincipal}`);
+      }
     }
-    
+
     // Apply payment (reduces principal for interest calculation)
     if (currentEvent.partialPayment > 0) {
       // Payments reduce the principal that earns interest going forward
       runningPrincipal = Math.max(0, runningPrincipal - currentEvent.partialPayment);
-      
+
       interestBreakdown.push({
         date: currentEvent.date,
         type: 'payment',
@@ -114,7 +119,7 @@ export const calculateLoanInterest = (loan) => {
         newPrincipal: runningPrincipal,
         description: `Payment received: ₹${currentEvent.partialPayment.toLocaleString()}`
       });
-      
+
       console.log(`Payment: ₹${currentEvent.partialPayment}, New principal: ₹${runningPrincipal}`);
     }
 
@@ -144,9 +149,10 @@ export const calculateLoanInterest = (loan) => {
   }
 
   // Calculate totals correctly - using the pre-calculated totals
-  const totalPrincipalGiven = originalLoanAmount + totalExtraLoans; // Total money given to customer
-  const totalAmountDue = totalPrincipalGiven + totalInterest; // Total amount customer owes
-  const currentOutstanding = totalAmountDue - totalPayments; // What customer still owes
+  // totalPrincipalGiven = original loan + all extra loans (not double-counted)
+  const totalPrincipalGiven = originalLoanAmount + totalExtraLoans;
+  const totalAmountDue = totalPrincipalGiven + totalInterest;
+  const currentOutstanding = totalAmountDue - totalPayments;
 
   const result = {
     totalInterest: Math.round(totalInterest * 100) / 100,
@@ -203,7 +209,7 @@ const calculateMonthsDifference = (startDate, endDate) => {
  * @returns {number} - Total amount paid
  */
 export const calculateTotalPaid = (loan) => {
-  const payments = loan.payments || loan.Payments || [];
+  const payments = loan.payments || [];
   if (payments.length === 0) return 0;
   return payments.reduce((total, payment) => {
     const partialPayment = payment.partialPayment || payment.PartialPayment || 0;
@@ -217,7 +223,7 @@ export const calculateTotalPaid = (loan) => {
  * @returns {number} - Total extra loans
  */
 export const calculateTotalExtraLoans = (loan) => {
-  const payments = loan.payments || loan.Payments || [];
+  const payments = loan.payments || [];
   if (payments.length === 0) return 0;
   return payments.reduce((total, payment) => {
     const extraLoan = payment.extraLoan || payment.ExtraLoan || 0;

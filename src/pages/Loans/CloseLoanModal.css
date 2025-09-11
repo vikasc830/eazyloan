@@ -1,0 +1,96 @@
+
+.close-loan-modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(30, 41, 59, 0.18);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.close-loan-modal-container {
+  background: #fff;
+  border-radius: 16px;
+  padding: 2.5rem 2rem 2rem 2rem;
+  min-width: 350px;
+  max-width: 95vw;
+  box-shadow: 0 6px 32px rgba(30,41,59,0.13);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.close-loan-modal-header {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin-bottom: 1.5rem;
+}
+.close-loan-modal-header .icon {
+  font-size: 2.1rem;
+  color: #2563eb;
+  background: #e0e7ff;
+  border-radius: 50%;
+  padding: 0.4rem;
+}
+.close-loan-modal-container h2 {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+.form-group {
+  margin-bottom: 1.3rem;
+  width: 100%;
+}
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: #334155;
+}
+.form-group input,
+.form-group textarea {
+  width: 100%;
+  padding: 0.65rem 0.9rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 1.05rem;
+  background: #f8fafc;
+  transition: border 0.2s;
+}
+.form-group input:focus,
+.form-group textarea:focus {
+  border: 1.5px solid #2563eb;
+  outline: none;
+}
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  width: 100%;
+  margin-top: 0.5rem;
+}
+.modal-actions button {
+  padding: 0.6rem 1.5rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 1.05rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s;
+}
+.modal-actions button[type="submit"] {
+  background: #2563eb;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(37,99,235,0.08);
+}
+.modal-actions button[type="submit"]:hover {
+  background: #1d4ed8;
+}
+.modal-actions button[type="button"] {
+  background: #f1f5f9;
+  color: #334155;
+}
+.modal-actions button[type="button"]:hover {
+  background: #e2e8f0;
+}
