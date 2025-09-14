@@ -17,7 +17,7 @@ const CloseLoanModal = ({ loan, onClose, onSubmit }) => {
       return;
     }
     await onSubmit({
-      loanId: loan.id,
+      loanId: loan.LoanId || loan.loanId || loan.id, // Use string LoanId for backend
       amountPaid: parseFloat(amountPaid),
       notes,
       closedDate: new Date().toISOString(),
@@ -30,7 +30,7 @@ const CloseLoanModal = ({ loan, onClose, onSubmit }) => {
       <div className="close-loan-modal-container">
         <div className="close-loan-modal-header">
           <span className="icon"><FaLock /></span>
-          <h2>Close Loan #{loan.id}</h2>
+          <h2>Close Loan #{loan.LoanId || loan.loanId || loan.id}</h2>
         </div>
         <form onSubmit={handleSubmit} style={{ width: '100%' }}>
           <div className="form-group">

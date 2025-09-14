@@ -4,7 +4,7 @@ import './LoanForm.css';
 
 const LoanForm = ({ loan, onSubmit, onCancel }) => {
   const [formData, setFormData] = useState({
-    loanid:'',
+    LoanId: '',
     customerName: '',
     relationName: '',
     relationType: 'father', // father, husband
@@ -29,7 +29,10 @@ const LoanForm = ({ loan, onSubmit, onCancel }) => {
 
   useEffect(() => {
     if (loan) {
-      setFormData(loan);
+      setFormData({
+        ...loan,
+        LoanId: loan.LoanId || loan.loanid || '',
+      });
     }
   }, [loan]);
 
@@ -68,13 +71,13 @@ const LoanForm = ({ loan, onSubmit, onCancel }) => {
   const validateField = (name, value) => {
     const newErrors = { ...errors };
     switch (name) {
-      case 'loanid':
+      case 'LoanId':
         if (!value.trim()) {
-          newErrors.loanid = 'Loan ID is required';
+          newErrors.LoanId = 'Loan ID is required';
         } else if (value.length < 3) {
-          newErrors.loanid = 'Loan ID must be at least 3 characters';
+          newErrors.LoanId = 'Loan ID must be at least 3 characters';
         } else {
-          delete newErrors.loanid;
+          delete newErrors.LoanId;
         }
         break;
       case 'customerName':
@@ -189,7 +192,7 @@ const LoanForm = ({ loan, onSubmit, onCancel }) => {
 
   const validateForm = () => {
     const fieldsToValidate = [
-      'loanid', 'customerName', 'relationName', 'phoneNumber', 'address',
+      'LoanId', 'customerName', 'relationName', 'phoneNumber', 'address',
       'loanAmount', 'interestRate', 'loanDate'
     ];
     
@@ -241,25 +244,26 @@ const LoanForm = ({ loan, onSubmit, onCancel }) => {
 
     // Prepare loan data
     let loanData = {
-      LoanId: formData.loanid || null,
-      CustomerName: formData.customerName || null,
-      RelationName: formData.relationName || null,
-      RelationType: formData.relationType || null,
-      Title: formData.title || null,
-      PhoneNumber: formData.phoneNumber || null,
-      Address: formData.address || null,
-      OrnamentType: formData.ornamentType || null,
-      GoldWeight: goldWeight,
-      SilverWeight: silverWeight,
-      LoanAmount: formData.loanAmount === '' ? null : formData.loanAmount,
-      InterestRate: formData.interestRate === '' ? null : formData.interestRate,
-      LoanDate: formData.loanDate || null,
+      LoanId: formData.LoanId.trim(),
+      CustomerName: formData.customerName.trim(),
+      RelationName: formData.relationName.trim(),
+      RelationType: formData.relationType,
+      Title: formData.title,
+      PhoneNumber: formData.phoneNumber.trim(),
+      Address: formData.address.trim(),
+      OrnamentType: formData.ornamentType,
+      GoldWeight: goldWeight === null ? 0 : goldWeight,
+      SilverWeight: silverWeight === null ? 0 : silverWeight,
+      LoanAmount: formData.loanAmount === '' ? 0 : formData.loanAmount,
+      InterestRate: formData.interestRate === '' ? 0 : formData.interestRate,
+      LoanDate: formData.loanDate,
       DueDate: dueDate,
       Notes: notes,
       EstimatedValue: estimatedValue,
       GoldRate: goldRate,
       SilverRate: silverRate,
-      payments: loan ? loan.payments || loan.Payments || [] : [] // Always use 'payments' in UI
+      Status: loan && loan.Status ? loan.Status : 'Active',
+      Payments: loan && loan.Payments ? loan.Payments : []
     };
 
     // Log payload for debugging
@@ -287,16 +291,16 @@ const LoanForm = ({ loan, onSubmit, onCancel }) => {
               <div className='form-group'>
                  <label>Loan ID</label>
                  <input type='text'
-                 name="loanid"
-                 value={formData.loanid}
+                 name="LoanId"
+                 value={formData.LoanId}
                  onChange={handleInputChange}
                  required
-                 className={errors.loanid ? 'error' : ''}
+                 className={errors.LoanId ? 'error' : ''}
                  />
-                 {errors.loanid && (
+                 {errors.LoanId && (
                    <div className="error-message">
                      <FaExclamationCircle />
-                     <span>{errors.loanid}</span>
+                     <span>{errors.LoanId}</span>
                    </div>
                  )}
               </div>

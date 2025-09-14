@@ -13,12 +13,9 @@ const LoanList = ({ loans, onEdit, onDelete, onRenew, onView }) => {
   const getStatus = (loan) => {
     const today = new Date();
     const dueDate = new Date(loan.dueDate);
-    const loanDate = new Date(loan.loanDate);
-    
     if (loan.status === 'closed') return 'Closed';
     if (loan.status === 'renewed') return 'Renewed';
     if (dueDate < today) return 'Overdue';
-    if (dueDate.getTime() - today.getTime() <= 7 * 24 * 60 * 60 * 1000) return 'Due Soon';
     return 'Active';
   };
 
@@ -163,9 +160,11 @@ const LoanList = ({ loans, onEdit, onDelete, onRenew, onView }) => {
               const status = getStatus(loan);
               const interest = calculateInterest(loan);
               
+              // Prefer DB LoanId, then user loanid, else fallback to id
+              const displayLoanId = loan.LoanId || loan.loanid || (loan.id ? `#${loan.id.slice ? loan.id.slice(-6) : loan.id}` : "-");
               return (
-                <tr key={loan.id}>
-                  <td className="loan-id">{loan.LoanId ? loan.LoanId : `#${loan.id.slice(-6)}`}</td>
+                <tr key={displayLoanId}>
+                  <td className="loan-id">{displayLoanId}</td>
                   <td>
                     <div className="customer-info">
                       <strong>{loan.title} {loan.customerName}</strong>

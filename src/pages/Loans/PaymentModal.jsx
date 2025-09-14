@@ -49,7 +49,7 @@ const PaymentModal = ({ loan, onClose, onSubmit }) => {
       if (!confirmOverpayment) return;
     }
 
-    onSubmit(loan.id, {
+    onSubmit(loan.LoanId || loan.loanId || loan.id, {
       partialPayment: paymentAmount,
       extraLoan: extraLoanAmount,
       date: paymentDate,

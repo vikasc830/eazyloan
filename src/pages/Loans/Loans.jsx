@@ -1,3 +1,5 @@
+import "./Loans.css";
+
 import React, { useEffect, useState } from "react";
 import {
   FaPlus,
@@ -6,25 +8,19 @@ import {
   FaRedo,
   FaEye,
   FaMoneyBillWave,
+  FaLock,
 } from "react-icons/fa";
 import LoanForm from "./LoanForm";
 import LoanDetails from "./LoanDetails";
 import PaymentModal from "./PaymentModal";
 import CloseLoanModal from "./CloseLoanModal";
-import { FaLock } from "react-icons/fa";
-import {
-  calculateLoanInterest,
-  calculateTotalPaid,
-  getCurrentBalance,
-  getLoanStatus,
-} from "../../utils/interestCalculator";
-import "./Loans.css";
+import { calculateLoanInterest } from "../../utils/interestCalculator";
 
 const Loans = () => {
+  // --- State and logic ---
   const [loans, setLoans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
   const [showForm, setShowForm] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -33,36 +29,9 @@ const Loans = () => {
   const [paymentLoan, setPaymentLoan] = useState(null);
   const [showCloseLoanModal, setShowCloseLoanModal] = useState(false);
   const [closingLoan, setClosingLoan] = useState(null);
-  // Handler to open close loan modal
-  const handleCloseLoan = (loan) => {
-    setClosingLoan(loan);
-    setShowCloseLoanModal(true);
-  };
-
-  // Handler to submit close loan data
-  const handleCloseLoanSubmit = async (closureData) => {
-    // Call your backend API to save closureData to closure DB
-    // Example endpoint: /api/LoanClosure
-    try {
-      const response = await fetch("https://localhost:7133/api/LoanClosure", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(closureData),
-      });
-      if (!response.ok) throw new Error("Failed to close loan");
-      // Optionally update loan status to closed in main DB
-      await fetchLoans();
-      alert("Loan closed and saved to closure database.");
-    } catch (err) {
-      alert("Failed to close loan: " + err.message);
-    }
-    setShowCloseLoanModal(false);
-    setClosingLoan(null);
-  };
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [filterStatus, setFilterStatus] = useState("all");
-
   const loansPerPage = 10;
 
   const fetchLoans = async () => {
@@ -70,10 +39,8 @@ const Loans = () => {
       const response = await fetch("https://localhost:7133/api/Loan");
       if (!response.ok) throw new Error("Failed to fetch loans");
       const data = await response.json();
-      console.log("Fetched loans from API:", data);
       setLoans(data);
     } catch (err) {
-      console.error(err);
       setError(err.message || "An error occurred");
     } finally {
       setLoading(false);
@@ -84,189 +51,180 @@ const Loans = () => {
     fetchLoans();
   }, []);
 
- const totalLoans = loans.length;
-const activeLoans = loans.filter((loan) => loan.status === "Active").length;
-const overdueLoans = loans.filter((loan) => {
-  const today = new Date();
-  const dueDate = new Date(loan.dueDate);
-  return dueDate < today && loan.status !== "closed";
-}).length;
-
-// ✅ Use current balance instead of just principal
-const totalAmount = loans.reduce((sum, loan) => {
-  return sum + getCurrentBalance(loan);
-}, 0);
+  const totalLoans = loans.length;
+  const activeLoans = loans.filter((loan) => loan.status === "Active").length;
+  const overdueLoans = loans.filter((loan) => {
+    const today = new Date();
+    const dueDate = new Date(loan.dueDate);
+    return dueDate < today && loan.status !== "closed";
+  }).length;
+  const totalAmount = loans.reduce((sum, loan) => {
+    const interestData = calculateLoanInterest(loan);
+    // Subtract total payments from principal+extra loans to get current principal outstanding
+    let principal = interestData.totalPrincipalGiven - (interestData.totalPayments || 0);
+    if (isNaN(principal)) {
+      principal = parseFloat(loan.loanAmount) || 0;
+    }
+    return sum + Math.max(0, principal);
+  }, 0);
 
   const filteredLoans = loans.filter((loan) => {
-
     const search = searchTerm ? searchTerm.toLowerCase() : '';
     const matchesSearch =
       (loan.customerName && loan.customerName.toLowerCase().includes(search)) ||
       (loan.phoneNumber && loan.phoneNumber.includes(searchTerm)) ||
       (loan.LoanId !== undefined && loan.LoanId !== null && String(loan.LoanId).toLowerCase().includes(search)) ||
       (loan.id !== undefined && loan.id !== null && String(loan.id).toLowerCase().includes(search));
-
     const matchesFilter =
       filterStatus === "all" ||
       (filterStatus === "active" && loan.status === "Active") ||
-      (filterStatus === "overdue" &&
-        new Date(loan.dueDate) < new Date() &&
-        loan.status !== "closed") ||
+      (filterStatus === "overdue" && new Date(loan.dueDate) < new Date() && loan.status !== "closed") ||
       (filterStatus === "due-soon" && loan.status === "Due Soon");
-
     return matchesSearch && matchesFilter;
   });
 
   const totalPages = Math.ceil(filteredLoans.length / loansPerPage);
   const startIndex = (currentPage - 1) * loansPerPage;
-  const currentLoans = filteredLoans.slice(
-    startIndex,
-    startIndex + loansPerPage
-  );
+  const currentLoans = filteredLoans.slice(startIndex, startIndex + loansPerPage);
 
   const handleAddLoan = () => {
     setEditingLoan(null);
     setShowForm(true);
   };
-
   const handleEditLoan = (loan) => {
     setEditingLoan(loan);
     setShowForm(true);
   };
-
   const handleViewLoan = (loan) => {
     setSelectedLoan(loan);
     setShowDetails(true);
   };
-
   const handleDeleteLoan = async (loanId) => {
     if (window.confirm("Are you sure you want to delete this loan?")) {
       try {
-        await fetch(`https://localhost:7133/api/Loan/${loanId}`, {
-          method: "DELETE",
-        });
+        await fetch(`https://localhost:7133/api/Loan/${loanId}`, { method: "DELETE" });
         fetchLoans();
       } catch (error) {
-        console.error("Failed to delete loan:", error);
         alert("Failed to delete loan.");
       }
     }
   };
-
   const handleRenewLoan = (loan) => {
-    const newId = `${loan.id}-R${Date.now()}`;
+    // Renew logic: open form with camelCase fields for LoanForm, reset loanDate/dueDate, clear payments/closure
+    const today = new Date();
+    const newLoanDate = today.toISOString().split('T')[0];
+    const dueDate = new Date(today);
+    dueDate.setMonth(dueDate.getMonth() + 11);
+    const newDueDate = dueDate.toISOString().split('T')[0];
     const renewedLoan = {
-      ...loan,
-      id: newId,
-      loanDate: new Date().toISOString().split("T")[0],
-      dueDate: "",
-      status: "Active",
+      LoanId: loan.LoanId || loan.loanId || loan.id || '',
+      customerName: loan.CustomerName || loan.customerName || '',
+      relationName: loan.RelationName || loan.relationName || '',
+      relationType: loan.RelationType || loan.relationType || 'father',
+      title: loan.Title || loan.title || 'Mr',
+      phoneNumber: loan.PhoneNumber || loan.phoneNumber || '',
+      address: loan.Address || loan.address || '',
+      ornamentType: loan.OrnamentType || loan.ornamentType || 'gold',
+      goldWeight: loan.GoldWeight || loan.goldWeight || '',
+      silverWeight: loan.SilverWeight || loan.silverWeight || '',
+      loanAmount: loan.LoanAmount || loan.loanAmount || '',
+      interestRate: loan.InterestRate || loan.interestRate || '3',
+      loanDate: newLoanDate,
+      dueDate: newDueDate,
+      notes: loan.Notes || loan.notes || '',
+      estimatedValue: loan.EstimatedValue || loan.estimatedValue || 0,
+      goldRate: loan.GoldRate || loan.goldRate || 9800,
+      silverRate: loan.SilverRate || loan.silverRate || 1080,
+      status: 'Active',
       payments: [],
-      notes: `Renewed from ${loan.id}. ${loan.notes || ""}`,
     };
-
-    setLoans((prevLoans) =>
-      prevLoans.map((l) =>
-        l.id === loan.id ? { ...l, status: "Renewed" } : l
-      )
-    );
-
-    setEditingLoan(renewedLoan);
-    setShowForm(true);
+    setEditingLoan(null); // Always treat as new loan
+    setShowForm(false); // Reset form state
+    setTimeout(() => {
+      setEditingLoan(renewedLoan);
+      setShowForm(true);
+    }, 0);
   };
-
   const handlePaymentAction = (loan) => {
     setPaymentLoan(loan);
     setShowPaymentModal(true);
   };
-
-  const handlePaymentSubmit = async (loanId, paymentData) => {
-    try {
-      // Use the dedicated payment endpoint
-      const paymentPayload = {
-        Id:loanId,
-        Date: paymentData.date,
-        PartialPayment: paymentData.partialPayment || 0,
-        ExtraLoan: paymentData.extraLoan || 0
-      };
-      
-      console.log("Sending payment data:", paymentPayload);
-      
-      const response = await fetch(`https://localhost:7133/api/Loan/${loanId}/payment`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(paymentPayload),
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error("Error adding payment:", errorData);
-        throw new Error("Failed to save payment");
-      }
-      
-      const updatedLoan = await response.json();
-      console.log("Payment added successfully:", updatedLoan);
-      
-      // Refresh the loans list
-      await fetchLoans();
-      
-      // Show success message
-      alert("Payment saved successfully!");
-      
-    } catch (error) {
-      console.error("Payment submission error:", error);
-      alert(`Failed to save payment: ${error.message}`);
-    }
-    
-    setShowPaymentModal(false);
-    setPaymentLoan(null);
+  const handleCloseLoan = (loan) => {
+    setClosingLoan(loan);
+    setShowCloseLoanModal(true);
   };
-
+  const handleCloseLoanSubmit = async (closureData) => {
+    try {
+      // closureData: { loanId, amountPaid, notes, closedDate }
+      // Use LoanId for backend
+      const loanId = closingLoan?.LoanId || closingLoan?.loanId || closingLoan?.id;
+      const payload = {
+        LoanId: String(loanId),
+        AmountPaid: closureData.amountPaid,
+        Notes: closureData.notes,
+        ClosedDate: closureData.closedDate
+      };
+      const response = await fetch('https://localhost:7133/api/LoanClosure', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!response.ok) throw new Error('Failed to close loan');
+      await fetchLoans();
+    } catch (err) {
+      alert(err.message || 'Error closing loan');
+    } finally {
+      setShowCloseLoanModal(false);
+      setClosingLoan(null);
+    }
+  };
   const handleFormSubmit = async (loanData) => {
     try {
-      const response = await fetch("https://localhost:7133/api/Loan", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+      // If editing, update; else, add new
+      const isEdit = !!editingLoan;
+      const url = isEdit
+        ? `https://localhost:7133/api/Loan/${loanData.LoanId}`
+        : 'https://localhost:7133/api/Loan';
+      const method = isEdit ? 'PUT' : 'POST';
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(loanData),
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error("Error from backend:", errorData);
-        alert("Failed to save loan. Please check the input.");
-        return;
-      }
-
-      await fetchLoans(); // refresh from backend
+      if (!response.ok) throw new Error('Failed to save loan');
+      await fetchLoans();
+    } catch (err) {
+      alert(err.message || 'Error saving loan');
+    } finally {
       setShowForm(false);
       setEditingLoan(null);
-    } catch (error) {
-      console.error("Failed to save loan:", error);
-      alert("Failed to save loan. Check console.");
     }
   };
-
+  const handlePaymentSubmit = async (loanId, paymentData) => {
+    try {
+      const url = `https://localhost:7133/api/Loan/${loanId}/payment`;
+      const paymentPayload = {
+        LoanId: String(loanId),
+        PartialPayment: paymentData.partialPayment || 0,
+        ExtraLoan: paymentData.extraLoan || 0,
+        Date: paymentData.date
+      };
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(paymentPayload),
+      });
+      if (!response.ok) throw new Error('Failed to add payment');
+      await fetchLoans();
+    } catch (err) {
+      alert(err.message || 'Error adding payment');
+    } finally {
+      setShowPaymentModal(false);
+      setPaymentLoan(null);
+    }
+  };
   const handlePageChange = (page) => {
     setCurrentPage(page);
-  };
-
-  const getStatusBadge = (loan) => {
-    const status = getLoanStatus(loan);
-    const statusClassMap = {
-      Active: "status-active",
-      "Due Soon": "status-due-soon",
-      Overdue: "status-overdue",
-      Closed: "status-closed",
-      Renewed: "status-renewed",
-      Paid: "status-active",
-    };
-
-    return {
-      text: status,
-      class: statusClassMap[status] || "status-active",
-    };
   };
 
   return (
@@ -316,7 +274,6 @@ const totalAmount = loans.reduce((sum, loan) => {
               onChange={(e) => setSearchTerm(e.target.value)}
               className="search-input"
             />
-
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
@@ -350,17 +307,13 @@ const totalAmount = loans.reduce((sum, loan) => {
                   currentLoans.map((loan) => {
                     const interestData = calculateLoanInterest(loan);
                     return (
-                      <tr key={loan.id}>
-                        <td className="loan-id">#{loan.loanid || loan.id}</td>
-                        <td className="customer-name">
-                          {loan.title} {loan.customerName}
-                        </td>
+                      <tr key={loan.LoanId || loan.loanId || loan.id}>
+                        <td className="loan-id">{loan.LoanId || loan.loanId || loan.id}</td>
+                        <td className="customer-name">{loan.title} {loan.customerName}</td>
                         <td className="guardian-name">{loan.relationName}</td>
                         <td>{loan.phoneNumber}</td>
                         <td>
-                          {loan.ornamentType === "both"
-                            ? "Gold & Silver"
-                            : loan.ornamentType}
+                          {loan.ornamentType === "both" ? "Gold & Silver" : loan.ornamentType}
                           <br />
                           <small>
                             {loan.goldWeight && `G: ${loan.goldWeight}g`}
@@ -368,83 +321,26 @@ const totalAmount = loans.reduce((sum, loan) => {
                             {loan.silverWeight && `S: ${loan.silverWeight}g`}
                           </small>
                         </td>
-                        <td className="amount">
-                          ₹{interestData.totalPrincipalGiven.toLocaleString()}
-                        </td>
-                        <td className="amount interest-amount">
-                          ₹{interestData.totalInterest.toLocaleString()}
-                        </td>
-                        <td className="amount total-amount">
-                          ₹{interestData.currentOutstanding.toLocaleString()}
-                        </td>
-                        <td>
-                          {new Date(loan.loanDate).toLocaleDateString()}
-                        </td>
+                        <td className="amount">₹{interestData.totalPrincipalGiven.toLocaleString()}</td>
+                        <td className="amount interest-amount">₹{interestData.totalInterest.toLocaleString()}</td>
+                        <td className="amount total-amount">₹{interestData.currentOutstanding.toLocaleString()}</td>
+                        <td>{new Date(loan.loanDate).toLocaleDateString()}</td>
                         <td>
                           <div className="action-buttons">
-                            <button
-                              className="btn-action btn-view"
-                              onClick={() => handleViewLoan(loan)}
-                              title="View Details"
-                            >
-                              <FaEye />
-                            </button>
-                            <button
-                              className="btn-action btn-edit"
-                              onClick={() => handleEditLoan(loan)}
-                              title="Edit Loan"
-                            >
-                              <FaEdit />
-                            </button>
-                            <button
-                              className="btn-action btn-payment"
-                              onClick={() => handlePaymentAction(loan)}
-                              title="Add Payment/Extra Loan"
-                            >
-                              <FaMoneyBillWave />
-                            </button>
-                            <button
-                              className="btn-action btn-renew"
-                              onClick={() => handleRenewLoan(loan)}
-                              title="Renew Loan"
-                            >
-                              <FaRedo />
-                            </button>
-                            <button
-                              className="btn-action btn-delete"
-                              onClick={() => handleDeleteLoan(loan.id)}
-                              title="Delete Loan"
-                            >
-                              <FaTrash />
-                            </button>
-                            <button
-                              className="btn-action btn-close-loan"
-                              onClick={() => handleCloseLoan(loan)}
-                              title="Close Loan"
-                              style={{ background: '#f1f5f9', color: '#2563eb', display: 'flex', alignItems: 'center', gap: 6, border: '1px solid #cbd5e1' }}
-                            >
-                              <FaLock style={{ fontSize: '1.1em', verticalAlign: 'middle' }} />
-                            </button>
+                            <button className="btn-action btn-view" onClick={() => handleViewLoan(loan)} title="View Details"><FaEye /></button>
+                            <button className="btn-action btn-edit" onClick={() => handleEditLoan(loan)} title="Edit Loan"><FaEdit /></button>
+                            <button className="btn-action btn-payment" onClick={() => handlePaymentAction(loan)} title="Add Payment/Extra Loan"><FaMoneyBillWave /></button>
+                            <button className="btn-action btn-renew" onClick={() => handleRenewLoan(loan)} title="Renew Loan"><FaRedo /></button>
+                            <button className="btn-action btn-delete" onClick={() => handleDeleteLoan(loan.LoanId || loan.loanId || loan.id)} title="Delete Loan"><FaTrash /></button>
+                            <button className="btn-action btn-close-loan" onClick={() => handleCloseLoan(loan)} title="Close Loan" style={{ background: '#f1f5f9', color: '#2563eb', display: 'flex', alignItems: 'center', gap: 6, border: '1px solid #cbd5e1' }}><FaLock style={{ fontSize: '1.1em', verticalAlign: 'middle' }} /></button>
                           </div>
                         </td>
-      {/* Close Loan Modal */}
-      {showCloseLoanModal && closingLoan && (
-        <CloseLoanModal
-          loan={closingLoan}
-          onClose={() => { setShowCloseLoanModal(false); setClosingLoan(null); }}
-          onSubmit={handleCloseLoanSubmit}
-        />
-      )}
                       </tr>
                     );
                   })
                 ) : (
                   <tr>
-                    <td colSpan="10" className="no-data">
-                      {searchTerm || filterStatus !== "all"
-                        ? "No loans match your search criteria"
-                        : "No loans found. Click 'Add New Loan' to get started."}
-                    </td>
+                    <td colSpan="10" style={{ textAlign: 'center' }}>No loans found.</td>
                   </tr>
                 )}
               </tbody>
@@ -453,80 +349,64 @@ const totalAmount = loans.reduce((sum, loan) => {
 
           {totalPages > 1 && (
             <div className="pagination">
-              <button
-                className="pagination-btn"
-                onClick={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage === 1}
-              >
-                Previous
-              </button>
-
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                (page) => (
-                  <button
-                    key={page}
-                    className={`pagination-btn ${
-                      currentPage === page ? "active" : ""
-                    }`}
-                    onClick={() => handlePageChange(page)}
-                  >
-                    {page}
-                  </button>
-                )
-              )}
-
-              <button
-                className="pagination-btn"
-                onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === totalPages}
-              >
-                Next
-              </button>
+              {Array.from({ length: totalPages }, (_, i) => (
+                <button
+                  key={i + 1}
+                  className={currentPage === i + 1 ? "active" : ""}
+                  onClick={() => handlePageChange(i + 1)}
+                >
+                  {i + 1}
+                </button>
+              ))}
             </div>
           )}
 
-          <div className="results-info">
-            Showing {startIndex + 1} to{" "}
-            {Math.min(startIndex + loansPerPage, filteredLoans.length)} of{" "}
-            {filteredLoans.length} loans
-          </div>
+          {showForm && (
+            <LoanForm
+              loan={editingLoan}
+              onSubmit={handleFormSubmit}
+              onCancel={() => {
+                setShowForm(false);
+                setEditingLoan(null);
+              }}
+            />
+          )}
+
+          {showDetails && selectedLoan && (
+            <LoanDetails
+              loan={selectedLoan}
+              onClose={() => {
+                setShowDetails(false);
+                setSelectedLoan(null);
+              }}
+              onCloseLoan={handleCloseLoan}
+            />
+          )}
+
+          {showPaymentModal && paymentLoan && (
+            <PaymentModal
+              loan={paymentLoan}
+              onClose={() => {
+                setShowPaymentModal(false);
+                setPaymentLoan(null);
+              }}
+              onSubmit={handlePaymentSubmit}
+            />
+          )}
+
+          {showCloseLoanModal && closingLoan && (
+            <CloseLoanModal
+              loan={closingLoan}
+              onClose={() => {
+                setShowCloseLoanModal(false);
+                setClosingLoan(null);
+              }}
+              onSubmit={handleCloseLoanSubmit}
+            />
+          )}
         </>
-      )}
-
-      {showForm && (
-        <LoanForm
-          loan={editingLoan}
-          onSubmit={handleFormSubmit}
-          onCancel={() => {
-            setShowForm(false);
-            setEditingLoan(null);
-          }}
-        />
-      )}
-
-      {showDetails && selectedLoan && (
-        <LoanDetails
-          loan={selectedLoan}
-          onClose={() => {
-            setShowDetails(false);
-            setSelectedLoan(null);
-          }}
-          onCloseLoan={handleCloseLoan}
-        />
-      )}
-
-      {showPaymentModal && paymentLoan && (
-        <PaymentModal
-          loan={paymentLoan}
-          onClose={() => {
-            setShowPaymentModal(false);
-            setPaymentLoan(null);
-          }}
-          onSubmit={handlePaymentSubmit}
-        />
       )}
     </div>
   );
-};
-
+}
 export default Loans;

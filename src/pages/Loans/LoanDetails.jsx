@@ -19,6 +19,8 @@ const LoanDetails = ({ loan, onClose }) => {
   const totalExtraLoans = calculateTotalExtraLoans(loan);
   const currentBalance = getCurrentBalance(loan);
   const status = getLoanStatus(loan);
+  // Prefer DB loanId, else fallback to id
+  const displayLoanId = loan.loanId || (loan.id ? `#${loan.id.slice ? loan.id.slice(-6) : loan.id}` : "-");
 
   const handlePrint = () => {
     window.print();
@@ -31,7 +33,7 @@ const LoanDetails = ({ loan, onClose }) => {
         <div className="loan-details-header">
           <div className="header-left">
             <h2>Loan Details</h2>
-            <span className="loan-id-badge">#{loan.id}</span>
+            <span className="loan-id-badge">{displayLoanId}</span>
           </div>
           <div className="header-actions">
             <button className="btn-print" onClick={handlePrint}>
