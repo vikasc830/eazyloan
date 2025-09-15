@@ -31,8 +31,31 @@ const LoanForm = ({ loan, onSubmit, onCancel }) => {
     if (loan) {
       setFormData({
         ...loan,
-        LoanId: loan.LoanId || loan.loanid || '',
+        LoanId: loan.LoanId || loan.loanId || loan.id || '',
+        // Ensure proper field mapping for renewed loans
+        customerName: loan.customerName || loan.CustomerName || '',
+        relationName: loan.relationName || loan.RelationName || '',
+        relationType: loan.relationType || loan.RelationType || 'father',
+        title: loan.title || loan.Title || 'Mr',
+        phoneNumber: loan.phoneNumber || loan.PhoneNumber || '',
+        address: loan.address || loan.Address || '',
+        ornamentType: loan.ornamentType || loan.OrnamentType || 'gold',
+        goldWeight: loan.goldWeight || loan.GoldWeight || '',
+        silverWeight: loan.silverWeight || loan.SilverWeight || '',
+        loanAmount: loan.loanAmount || loan.LoanAmount || '',
+        interestRate: loan.interestRate || loan.InterestRate || '3',
+        loanDate: loan.loanDate || loan.LoanDate || new Date().toISOString().split('T')[0],
+        dueDate: loan.dueDate || loan.DueDate || '',
+        notes: loan.notes || loan.Notes || ''
       });
+      
+      // Set rates if available
+      if (loan.goldRate || loan.GoldRate) {
+        setGoldRate(loan.goldRate || loan.GoldRate);
+      }
+      if (loan.silverRate || loan.SilverRate) {
+        setSilverRate(loan.silverRate || loan.SilverRate);
+      }
     }
   }, [loan]);
 

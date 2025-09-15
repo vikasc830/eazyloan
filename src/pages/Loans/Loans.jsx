@@ -110,23 +110,28 @@ const Loans = () => {
     }
   };
    const handleRenewLoan = (loan) => {
-    const newId = `${loan.id}-R${Date.now()}`;
+    // Generate a new unique loan ID for renewal
+    const timestamp = Date.now().toString().slice(-6); // Last 6 digits of timestamp
+    const originalId = loan.LoanId || loan.loanId || loan.id;
+    const newLoanId = `${originalId}-R${timestamp}`;
+    
     const renewedLoan = {
       ...loan,
-      id: newId,
+      LoanId: newLoanId, // Use LoanId for backend compatibility
+      id: undefined, // Clear the old id
       loanDate: new Date().toISOString().split("T")[0],
-      dueDate: "",
-      status: "Active",
-      payments: [],
-      notes: `Renewed from ${loan.loanId}. ${loan.notes || ""}`,
+      dueDate: null,
+      status: "Active", 
+      payments: [], // Clear payments for new loan
+      Payments: [], // Clear Payments array as well
+      notes: `Renewed from ${originalId}. ${loan.notes || ""}`,
+      // Reset calculated fields
+      estimatedValue: loan.estimatedValue || 0,
+      goldRate: loan.goldRate || 0,
+      silverRate: loan.silverRate || 0
     };
 
-    setLoans((prevLoans) =>
-      prevLoans.map((l) =>
-        l.id === loan.id ? { ...l, status: "Renewed" } : l
-      )
-    );
-
+    // Set the renewed loan for editing
     setEditingLoan(renewedLoan);
     setShowForm(true);
   };
@@ -168,16 +173,53 @@ const Loans = () => {
     try {
       // If editing, update; else, add new
       const isEdit = !!editingLoan;
+      
+      // For renewals, we always create a new loan (never update)
+      const isRenewal = editingLoan && editingLoan.notes && editingLoan.notes.includes('Renewed from');
+      
       const url = isEdit
-        ? `https://localhost:7133/api/Loan/${loanData.LoanId}`
+        ? (isRenewal 
+            ? 'https://localhost:7133/api/Loan' // Create new loan for renewal
+            : `https://localhost:7133/api/Loan/${loanData.LoanId}`) // Update existing loan
         : 'https://localhost:7133/api/Loan';
-      const method = isEdit ? 'PUT' : 'POST';
+        
+      const method = (isEdit && !isRenewal) ? 'PUT' : 'POST';
+      
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(loanData),
       });
+      
       if (!response.ok) throw new Error('Failed to save loan');
+      
+      // If this was a renewal, mark the original loan as renewed
+      if (isRenewal && editingLoan.notes) {
+        const originalLoanIdMatch = editingLoan.notes.match(/Renewed from (.+?)\./);
+        if (originalLoanIdMatch) {
+          const originalLoanId = originalLoanIdMatch[1];
+          try {
+            // Update the original loan status to "Renewed"
+            const originalLoan = loans.find(l => 
+              (l.LoanId || l.loanId || l.id) === originalLoanId
+            );
+            if (originalLoan) {
+              const updatePayload = {
+                ...originalLoan,
+                Status: 'Renewed'
+              };
+              await fetch(`https://localhost:7133/api/Loan/${originalLoanId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updatePayload),
+              });
+            }
+          } catch (updateError) {
+            console.warn('Failed to update original loan status:', updateError);
+          }
+        }
+      }
+      
       await fetchLoans();
     } catch (err) {
       alert(err.message || 'Error saving loan');
