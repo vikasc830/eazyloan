@@ -109,42 +109,28 @@ const Loans = () => {
       }
     }
   };
-  const handleRenewLoan = (loan) => {
-    // Renew logic: open form with camelCase fields for LoanForm, reset loanDate/dueDate, clear payments/closure
-    const today = new Date();
-    const newLoanDate = today.toISOString().split('T')[0];
-    const dueDate = new Date(today);
-    dueDate.setMonth(dueDate.getMonth() + 11);
-    const newDueDate = dueDate.toISOString().split('T')[0];
+   const handleRenewLoan = (loan) => {
+    const newId = `${loan.id}-R${Date.now()}`;
     const renewedLoan = {
-      LoanId: loan.LoanId || loan.loanId || loan.id || '',
-      customerName: loan.CustomerName || loan.customerName || '',
-      relationName: loan.RelationName || loan.relationName || '',
-      relationType: loan.RelationType || loan.relationType || 'father',
-      title: loan.Title || loan.title || 'Mr',
-      phoneNumber: loan.PhoneNumber || loan.phoneNumber || '',
-      address: loan.Address || loan.address || '',
-      ornamentType: loan.OrnamentType || loan.ornamentType || 'gold',
-      goldWeight: loan.GoldWeight || loan.goldWeight || '',
-      silverWeight: loan.SilverWeight || loan.silverWeight || '',
-      loanAmount: loan.LoanAmount || loan.loanAmount || '',
-      interestRate: loan.InterestRate || loan.interestRate || '3',
-      loanDate: newLoanDate,
-      dueDate: newDueDate,
-      notes: loan.Notes || loan.notes || '',
-      estimatedValue: loan.EstimatedValue || loan.estimatedValue || 0,
-      goldRate: loan.GoldRate || loan.goldRate || 9800,
-      silverRate: loan.SilverRate || loan.silverRate || 1080,
-      status: 'Active',
+      ...loan,
+      id: newId,
+      loanDate: new Date().toISOString().split("T")[0],
+      dueDate: "",
+      status: "Active",
       payments: [],
+      notes: `Renewed from ${loan.loanId}. ${loan.notes || ""}`,
     };
-    setEditingLoan(null); // Always treat as new loan
-    setShowForm(false); // Reset form state
-    setTimeout(() => {
-      setEditingLoan(renewedLoan);
-      setShowForm(true);
-    }, 0);
+
+    setLoans((prevLoans) =>
+      prevLoans.map((l) =>
+        l.id === loan.id ? { ...l, status: "Renewed" } : l
+      )
+    );
+
+    setEditingLoan(renewedLoan);
+    setShowForm(true);
   };
+
   const handlePaymentAction = (loan) => {
     setPaymentLoan(loan);
     setShowPaymentModal(true);
