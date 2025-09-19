@@ -15,6 +15,7 @@ import LoanDetails from "./LoanDetails";
 import PaymentModal from "./PaymentModal";
 import CloseLoanModal from "./CloseLoanModal";
 import { calculateLoanInterest } from "../../utils/interestCalculator";
+import { getLoanStatus } from "../../utils/interestCalculator";
 
 const Loans = () => {
   // --- State and logic ---
@@ -52,20 +53,35 @@ const Loans = () => {
   }, []);
 
   const totalLoans = loans.length;
-  const activeLoans = loans.filter((loan) => loan.status === "Active").length;
-  const overdueLoans = loans.filter((loan) => {
-    const today = new Date();
-    const dueDate = new Date(loan.dueDate);
-    return dueDate < today && loan.status !== "closed";
+  const activeLoans = loans.filter((loan) => {
+    const status = getLoanStatus(loan);
+    return status === "Active";
   }).length;
-  const totalAmount = loans.reduce((sum, loan) => {
+  
+  const overdueLoans = loans.filter((loan) => {
+    const status = getLoanStatus(loan);
+    return status === "Overdue";
+  }).length;
+  
+  const closedLoans = loans.filter((loan) => {
+    const status = getLoanStatus(loan);
+    return status === "Closed";
+  }).length;
+  
+  const renewedLoans = loans.filter((loan) => {
+    const status = getLoanStatus(loan);
+    return status === "Renewed";
+  }).length;
+  
+  // Only calculate total amount for Active and Overdue loans
+  const activeAndOverdueLoans = loans.filter((loan) => {
+    const status = getLoanStatus(loan);
+    return status === "Active" || status === "Overdue";
+  });
+  
+  const totalAmount = activeAndOverdueLoans.reduce((sum, loan) => {
     const interestData = calculateLoanInterest(loan);
-    // Subtract total payments from principal+extra loans to get current principal outstanding
-    let principal = interestData.totalPrincipalGiven - (interestData.totalPayments || 0);
-    if (isNaN(principal)) {
-      principal = parseFloat(loan.loanAmount) || 0;
-    }
-    return sum + Math.max(0, principal);
+    return sum + interestData.currentOutstanding;
   }, 0);
 
   const filteredLoans = loans.filter((loan) => {
@@ -287,10 +303,18 @@ const Loans = () => {
               <div className="summary-label">Overdue Loans</div>
             </div>
             <div className="summary-card">
+              <div className="summary-value">{closedLoans}</div>
+              <div className="summary-label">Closed Loans</div>
+            </div>
+            <div className="summary-card">
+              <div className="summary-value">{renewedLoans}</div>
+              <div className="summary-label">Renewed Loans</div>
+            </div>
+            <div className="summary-card">
               <div className="summary-value">
                 ₹{totalAmount >= 100000 ? (totalAmount / 100000).toFixed(1) + 'L' : totalAmount.toLocaleString()}
               </div>
-              <div className="summary-label">Total Amount</div>
+              <div className="summary-label">Outstanding Amount</div>
             </div>
           </div>
 

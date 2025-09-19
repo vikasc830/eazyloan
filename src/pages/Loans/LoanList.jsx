@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { FaEdit, FaTrash, FaRedo, FaEye } from 'react-icons/fa';
+import { getLoanStatus } from '../../utils/interestCalculator';
 import './LoanList.css';
 
 const DEFAULT_SORT_KEY = 'loanDate';
@@ -10,22 +11,13 @@ const LoanList = ({ loans, onEdit, onDelete, onRenew, onView }) => {
   const [sortBy, setSortBy] = useState(DEFAULT_SORT_KEY);
   const [sortOrder, setSortOrder] = useState('desc');
 
-  const getStatus = (loan) => {
-    const today = new Date();
-    const dueDate = new Date(loan.dueDate);
-    if (loan.status === 'closed') return 'Closed';
-    if (loan.status === 'renewed') return 'Renewed';
-    if (dueDate < today) return 'Overdue';
-    return 'Active';
-  };
-
   const getStatusClass = (status) => {
     switch (status) {
       case 'Active': return 'status-active';
-      case 'Due Soon': return 'status-due-soon';
       case 'Overdue': return 'status-overdue';
       case 'Closed': return 'status-closed';
       case 'Renewed': return 'status-renewed';
+      case 'Paid': return 'status-active';
       default: return 'status-active';
     }
   };
@@ -48,7 +40,7 @@ const LoanList = ({ loans, onEdit, onDelete, onRenew, onView }) => {
         (loan.LoanId !== undefined && loan.LoanId !== null && String(loan.LoanId).toLowerCase().includes(search)) ||
         (loan.id !== undefined && loan.id !== null && String(loan.id).toLowerCase().includes(search));
 
-      const status = getStatus(loan);
+      const status = getLoanStatus(loan);
       const matchesFilter = filterStatus === 'all' || status.toLowerCase().includes(filterStatus.toLowerCase());
 
       return matchesSearch && matchesFilter;
@@ -113,10 +105,10 @@ const LoanList = ({ loans, onEdit, onDelete, onRenew, onView }) => {
           >
             <option value="all">All Status</option>
             <option value="active">Active</option>
-            <option value="due">Due Soon</option>
             <option value="overdue">Overdue</option>
             <option value="closed">Closed</option>
             <option value="renewed">Renewed</option>
+            <option value="paid">Paid</option>
           </select>
           
           <select 
@@ -157,7 +149,7 @@ const LoanList = ({ loans, onEdit, onDelete, onRenew, onView }) => {
           </thead>
           <tbody>
             {filteredAndSortedLoans.map((loan) => {
-              const status = getStatus(loan);
+              const status = getLoanStatus(loan);
               const interest = calculateInterest(loan);
               
               // Prefer DB LoanId, then user loanid, else fallback to id

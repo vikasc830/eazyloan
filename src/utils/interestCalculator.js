@@ -247,16 +247,27 @@ export const getCurrentBalance = (loan) => {
  * @returns {string} - Loan status
  */
 export const getLoanStatus = (loan) => {
-  if (loan.status === 'closed') return 'Closed';
-  if (loan.status === 'renewed') return 'Renewed';
+  // Check explicit status first
+  if (loan.status && loan.status.toLowerCase() === 'closed') return 'Closed';
+  if (loan.status && loan.status.toLowerCase() === 'renewed') return 'Renewed';
+  if (loan.Status && loan.Status.toLowerCase() === 'closed') return 'Closed';
+  if (loan.Status && loan.Status.toLowerCase() === 'renewed') return 'Renewed';
 
   const today = new Date();
-  const dueDate = new Date(loan.dueDate);
+  const loanDate = new Date(loan.loanDate || loan.LoanDate);
   const balance = getCurrentBalance(loan);
 
+  // If balance is zero or negative, loan is effectively closed
   if (balance <= 0) return 'Paid';
-  if (dueDate < today) return 'Overdue';
-  if (dueDate.getTime() - today.getTime() <= 7 * 24 * 60 * 60 * 1000) return 'Due Soon';
+  
+  // Calculate months since loan date
+  const monthsDiff = (today.getFullYear() - loanDate.getFullYear()) * 12 + 
+                     (today.getMonth() - loanDate.getMonth());
+  
+  // If loan is more than 11 months old, it's overdue
+  if (monthsDiff > 11) return 'Overdue';
+  
+  // Otherwise, it's active
   return 'Active';
 };
 

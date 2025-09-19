@@ -30,7 +30,9 @@ import {
   FaArrowUp,
   FaArrowDown,
   FaEquals,
-  FaCoins
+  FaCoins,
+  FaLock,
+  FaRedo
 } from 'react-icons/fa';
 import { calculateLoanInterest, getCurrentBalance, getLoanStatus } from "../utils/interestCalculator";
 import "./Dashboard.css";
@@ -152,7 +154,20 @@ const Dashboard = () => {
     const interestTrendMap = new Map();
     const performanceMap = new Map();
 
+    // Only process Active and Overdue loans for financial calculations
+    const activeAndOverdueLoans = loansData.filter(loan => {
+      const status = getLoanStatus(loan);
+      return status === 'Active' || status === 'Overdue';
+    });
+    
+    // Process all loans for status distribution
     loansData.forEach(loan => {
+      const status = getLoanStatus(loan);
+      statusMap.set(status, (statusMap.get(status) || 0) + 1);
+    });
+    
+    // Process only active and overdue loans for financial data
+    activeAndOverdueLoans.forEach(loan => {
       const loanDate = new Date(loan.loanDate);
       const monthKey = `${loanDate.getFullYear()}-${String(loanDate.getMonth() + 1).padStart(2, '0')}`;
       const monthName = loanDate.toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
@@ -160,7 +175,6 @@ const Dashboard = () => {
       // Calculate interest data
       const interestData = calculateLoanInterest(loan);
       const currentBalance = getCurrentBalance(loan);
-      const status = getLoanStatus(loan);
       
       // Monthly data aggregation
       if (!monthlyMap.has(monthKey)) {
@@ -183,9 +197,6 @@ const Dashboard = () => {
       monthData.currentBalance += interestData.currentOutstanding;
       monthData.loanCount += 1;
       monthData.newLoans += 1;
-      
-      // Status data
-      statusMap.set(status, (statusMap.get(status) || 0) + 1);
       
       // Ornament type data with values
       const ornamentType = loan.ornamentType === 'both' ? 'Gold & Silver' : 
@@ -288,21 +299,44 @@ const Dashboard = () => {
 
   // Calculate metrics
   const totalLoans = loans.length;
-  const activeLoans = loans.filter(loan => getLoanStatus(loan) === 'Active').length;
-  const overdueLoans = loans.filter(loan => getLoanStatus(loan) === 'Overdue').length;
+  const activeLoans = loans.filter(loan => {
+    const status = getLoanStatus(loan);
+    return status === 'Active';
+  }).length;
+  
+  const overdueLoans = loans.filter(loan => {
+    const status = getLoanStatus(loan);
+    return status === 'Overdue';
+  }).length;
+  
+  const closedLoans = loans.filter(loan => {
+    const status = getLoanStatus(loan);
+    return status === 'Closed';
+  }).length;
+  
+  const renewedLoans = loans.filter(loan => {
+    const status = getLoanStatus(loan);
+    return status === 'Renewed';
+  }).length;
   
   // Calculate correct totals using interest calculator
-  const totalPrincipal = loans.reduce((sum, loan) => {
+  // Only include Active and Overdue loans in financial calculations
+  const activeAndOverdueLoans = loans.filter(loan => {
+    const status = getLoanStatus(loan);
+    return status === 'Active' || status === 'Overdue';
+  });
+  
+  const totalPrincipal = activeAndOverdueLoans.reduce((sum, loan) => {
     const interestData = calculateLoanInterest(loan);
     return sum + interestData.totalPrincipalGiven;
   }, 0);
   
-  const totalInterest = loans.reduce((sum, loan) => {
+  const totalInterest = activeAndOverdueLoans.reduce((sum, loan) => {
     const interestData = calculateLoanInterest(loan);
     return sum + interestData.totalInterest;
   }, 0);
   
-  const totalAmount = loans.reduce((sum, loan) => {
+  const totalAmount = activeAndOverdueLoans.reduce((sum, loan) => {
     const interestData = calculateLoanInterest(loan);
     return sum + interestData.currentOutstanding;
   }, 0);
@@ -340,28 +374,44 @@ const Dashboard = () => {
       subtitle: "Needs attention"
     },
     { 
+      title: "Closed Loans", 
+      value: closedLoans, 
+      icon: FaLock,
+      color: COLORS.info,
+      trend: 3.4,
+      subtitle: "Completed loans"
+    },
+    { 
+      title: "Renewed Loans", 
+      value: renewedLoans, 
+      icon: FaRedo,
+      color: COLORS.secondary,
+      trend: 1.8,
+      subtitle: "Renewed loans"
+    },
+    { 
       title: "Total Principal", 
-      value: `₹${totalPrincipal >= 100000 ? (totalPrincipal / 100000).toFixed(1) + 'L' : totalPrincipal.toLocaleString()}`, 
+      value: `₹${totalPrincipal >= 100000 ? (totalPrincipal / 100000).toFixed(1) + 'L' : Math.round(totalPrincipal).toLocaleString()}`, 
       icon: FaCoins,
       color: COLORS.info,
       trend: 8.7,
-      subtitle: "Principal amount"
+      subtitle: "Active + Overdue only"
     },
     { 
       title: "Interest Earned", 
-      value: `₹${totalInterest >= 100000 ? (totalInterest / 100000).toFixed(1) + 'L' : totalInterest.toLocaleString()}`, 
+      value: `₹${totalInterest >= 100000 ? (totalInterest / 100000).toFixed(1) + 'L' : Math.round(totalInterest).toLocaleString()}`, 
       icon: FaArrowUp, 
       color: COLORS.warning,
       trend: 12.3,
-      subtitle: "Total interest"
+      subtitle: "Active + Overdue only"
     },
     { 
       title: "Outstanding", 
-      value: `₹${totalAmount >= 100000 ? (totalAmount / 100000).toFixed(1) + 'L' : totalAmount.toLocaleString()}`, 
+      value: `₹${totalAmount >= 100000 ? (totalAmount / 100000).toFixed(1) + 'L' : Math.round(totalAmount).toLocaleString()}`, 
       icon: FaMoneyBillWave, 
       color: COLORS.secondary,
       trend: -3.4,
-      subtitle: "To be collected"
+      subtitle: "Active + Overdue only"
     },
   ];
 
