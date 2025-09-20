@@ -21,8 +21,8 @@ const LoanForm = ({ loan, onSubmit, onCancel }) => {
     notes: ''
   });
 
-  const [goldRate, setGoldRate] = useState(9800); // Default gold rate per gram
-  const [silverRate, setSilverRate] = useState(1080); // Default silver rate per gram
+  const [goldRate, setGoldRate] = useState(11300); // Default gold rate per gram
+  const [silverRate, setSilverRate] = useState(130); // Default silver rate per gram
   const [estimatedValue, setEstimatedValue] = useState(0);
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
