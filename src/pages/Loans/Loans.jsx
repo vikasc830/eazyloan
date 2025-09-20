@@ -94,8 +94,10 @@ const Loans = () => {
     const matchesFilter =
       filterStatus === "all" ||
       (filterStatus === "active" && loan.status === "Active") ||
-      (filterStatus === "overdue" && new Date(loan.dueDate) < new Date() && loan.status !== "closed") ||
-      (filterStatus === "due-soon" && loan.status === "Due Soon");
+      (filterStatus === "overdue" && getLoanStatus(loan) === "Overdue") ||
+      (filterStatus === "closed" && getLoanStatus(loan) === "Closed") ||
+      (filterStatus === "renewed" && getLoanStatus(loan) === "Renewed") ||
+      (filterStatus === "paid" && getLoanStatus(loan) === "Paid");
     return matchesSearch && matchesFilter;
   });
 
